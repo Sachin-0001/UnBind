@@ -81,6 +81,11 @@ export async function getMe() {
   return apiFetch('/auth/me');
 }
 
+/** Returns { plan, isPro } for the current authenticated user. */
+export async function getUserPlan() {
+  return apiFetch('/user/plan/');
+}
+
 // ─── Analysis endpoints ───────────────────────────────────────────────────────
 
 /**

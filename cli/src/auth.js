@@ -1,7 +1,43 @@
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { getToken, clearToken } from './config.js';
-import { getMe, login, signup } from './api.js';
+import { getMe, getUserPlan, login, signup } from './api.js';
+
+const PRO_PLAN = 'Verdict';
+
+/**
+ * Checks that the authenticated user is subscribed to the Verdict Pro plan.
+ * Exits the process with a friendly message if they are not.
+ */
+export async function ensureProAccess() {
+  let planInfo;
+  try {
+    planInfo = await getUserPlan();
+  } catch {
+    console.error(chalk.red('\n  ✗ Could not verify your subscription. Please try again.\n'));
+    process.exit(1);
+  }
+
+  if (planInfo.plan !== PRO_PLAN) {
+    console.log(
+      '\n' +
+      chalk.bgRed.white.bold('  ✗ CLI Access Restricted  ') +
+      '\n\n' +
+      chalk.white('  The UnBindAI CLI is exclusively available to ') +
+      chalk.cyan.bold('Verdict') +
+      chalk.white(' subscribers.') +
+      '\n\n' +
+      (planInfo.plan
+        ? chalk.dim(`  Your current plan: ${chalk.yellow(planInfo.plan)}`) + '\n'
+        : chalk.dim('  Your current plan: ') + chalk.yellow('Free') + '\n') +
+      '\n' +
+      chalk.white('  Upgrade at: ') +
+      chalk.underline.cyan('http://localhost:3000/pricing') +
+      '\n'
+    );
+    process.exit(1);
+  }
+}
 
 /**
  * Ensures the user is authenticated before any API call.

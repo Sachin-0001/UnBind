@@ -5,19 +5,48 @@ import ora from 'ora';
 // ─── Banner ───────────────────────────────────────────────────────────────────
 
 export function printBanner() {
-  const title =
-    chalk.bold.cyan('UnBind') + chalk.bold.white('AI') + '  ' + chalk.dim('CLI');
-  const subtitle = chalk.dim('AI-powered legal contract analysis');
+  const I = chalk.hex('#6366f1'); // indigo — matches the SVG logo stroke colour
 
-  console.log(
-    boxen(`${title}\n${subtitle}`, {
-      padding: { top: 0, bottom: 0, left: 3, right: 3 },
-      margin: { top: 1, bottom: 1 },
-      borderStyle: 'round',
-      borderColor: 'cyan',
-      textAlignment: 'center',
-    })
-  );
+  // ASCII globe — reproduces the SVG's outer circle, vertical meridian,
+  // horizontal equator, and the two offset elliptical longitude curves (╮╭/╯╰)
+  const globe = [
+    I('  ╭─────╮  '),
+    I(' ╱ ╮   ╭ ╲ '),
+    I('│  │   │  │'),
+    I('├──┼───┼──┤'),
+    I('│  │   │  │'),
+    I(' ╲ ╯   ╰ ╱ '),
+    I('  ╰─────╯  '),
+  ];
+
+  // "UNBIND" in bold-cyan block letters (6 rows)
+  const word = [
+    chalk.bold.cyan(' ██╗   ██╗███╗   ██╗██████╗ ██╗███╗   ██╗██████╗ '),
+    chalk.bold.cyan(' ██║   ██║████╗  ██║██╔══██╗██║████╗  ██║██╔══██╗'),
+    chalk.bold.cyan(' ██║   ██║██╔██╗ ██║██████╔╝██║██╔██╗ ██║██║  ██║'),
+    chalk.bold.cyan(' ██║   ██║██║╚██╗██║██╔══██╗██║██║╚██╗██║██║  ██║'),
+    chalk.bold.cyan(' ╚██████╔╝██║ ╚████║██████╔╝██║██║ ╚████║██████╔╝'),
+    chalk.bold.cyan('  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚═╝╚═╝  ╚═══╝╚═════╝ '),
+  ];
+
+  // Globe has 7 rows; globe[0] is the top-cap that floats above the word block,
+  // then globe[1-6] are zipped side-by-side with word[0-5].
+  const lines = [
+    globe[0],
+    globe[1] + word[0],
+    globe[2] + word[1],
+    globe[3] + word[2],
+    globe[4] + word[3],
+    globe[5] + word[4],
+    globe[6] + word[5],
+  ];
+
+  const divider = chalk.dim('━'.repeat(62));
+  const tagline =
+    chalk.white('     AI-powered legal contract analysis  ') +
+    chalk.cyan.bold('CLI');
+
+  console.log('\n' + lines.join('\n') + '\n' + divider + '\n' + tagline + '\n' + divider + '\n');
 }
 
 // ─── Spinner ──────────────────────────────────────────────────────────────────

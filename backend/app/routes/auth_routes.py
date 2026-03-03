@@ -91,6 +91,8 @@ async def me(request: Request):
         email=user["email"],
         picture=user.get("picture"),
         pro=user.get("pro", False),
+        plan=user.get("plan"),
+        createdAt=user.get("createdAt"),
     )
 
 

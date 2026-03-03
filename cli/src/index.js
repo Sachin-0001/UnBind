@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import chalk from 'chalk';
 import { setApiUrl, clearToken } from './config.js';
-import { ensureAuth } from './auth.js';
+import { ensureAuth, ensureProAccess } from './auth.js';
 import { uploadAndAnalyze } from './api.js';
 import { startRepl } from './repl.js';
 import { printBanner, createSpinner } from './display.js';
@@ -97,6 +97,9 @@ export async function main(rawArgs) {
 
   // Authenticate
   await ensureAuth();
+
+  // Verify Verdict Pro subscription
+  await ensureProAccess();
 
   // Upload & analyse
   const fileName = path.basename(filePath);

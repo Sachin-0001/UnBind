@@ -21,7 +21,8 @@ class UserResponse(BaseModel):
     email: str
     picture: Optional[str] = None
     pro: bool = False
-    createdAt: datetime
+    plan: Optional[str] = None
+    createdAt: Optional[datetime] = None
 
 
 class UpdatePasswordRequest(BaseModel):
