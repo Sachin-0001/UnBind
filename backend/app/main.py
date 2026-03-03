@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 from app.config import get_settings
 from app.database import connect_db, close_db
@@ -45,6 +46,5 @@ async def health():
 
 
 if __name__ == "__main__":
-    import uvicorn
 
     uvicorn.run("app.main:app", host="0.0.0.0", port=settings.PORT, reload=True)
