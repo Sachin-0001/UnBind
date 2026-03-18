@@ -283,8 +283,3 @@ Credentials are stored in `~/.config/unbindai/config.json` (Linux) and reused ac
 | PDF      | pdfplumber, PyPDF2 (backend) · jsPDF, pdf-lib (frontend export) |
 | CLI      | Node.js 18+, inquirer, chalk, ora, boxen, conf                  |
 
----
-
-## 📄 License
-
-MIT
