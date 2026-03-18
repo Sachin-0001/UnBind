@@ -37,6 +37,8 @@ export async function ensureProAccess() {
     );
     process.exit(1);
   }
+
+  return planInfo;
 }
 
 /**

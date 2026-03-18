@@ -26,9 +26,14 @@ const MENU = [
  * Starts the interactive REPL loop for a loaded analysis.
  *
  * @param {object} analysis  Full StoredAnalysis returned by the backend.
+ * @param {object} opts      Optional metadata such as aiModel.
  */
-export async function startRepl(analysis) {
+export async function startRepl(analysis, opts = {}) {
   const { fileName, analysisResult, documentText } = analysis;
+  const aiModel =
+    opts.aiModel ||
+    'llama-3.3-70b-versatile';
+  const displayModel = aiModel.replace(/^openai\//, '');
 
   const clauseCount = analysisResult?.clauses?.length ?? 0;
   const highCount = analysisResult?.clauses?.filter((c) => c.riskLevel === 'High').length ?? 0;
@@ -43,7 +48,7 @@ export async function startRepl(analysis) {
       (highCount > 0 ? chalk.red(`  ·  ${highCount} high-risk`) : '')
   );
   console.log(
-    chalk.dim(`    AI Model: llama-3.3-70b-versatile  ·  Groq`)
+    chalk.dim(`    AI Model: ${displayModel}`)
   );
 
   // ── REPL loop ──

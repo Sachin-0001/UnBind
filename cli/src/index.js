@@ -110,7 +110,10 @@ export async function main(rawArgs) {
   await ensureAuth();
 
   // Verify Verdict Pro subscription
-  await ensureProAccess();
+  const planInfo = await ensureProAccess();
+  const aiModel =
+    planInfo?.aiModel ||
+    (planInfo?.isPro ? 'gpt-oss-120b' : 'llama-3.3-70b-versatile');
 
   // Upload & analyse
   const fileName = path.basename(filePath);
@@ -128,7 +131,7 @@ export async function main(rawArgs) {
   }
 
   // Hand off to interactive REPL
-  await startRepl(analysis);
+  await startRepl(analysis, { aiModel });
 }
 
 // ─── list command ─────────────────────────────────────────────────────────────
