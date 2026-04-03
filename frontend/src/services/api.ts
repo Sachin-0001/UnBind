@@ -134,7 +134,28 @@ export const deleteAnalysis = async (id: string): Promise<void> => {
 // ─── User Plan ───
 
 export const getUserPlan = async (): Promise<{ plan: string | null; isPro: boolean; aiModel: string; dailyCount: number; dailyLimit: number | null; limitReached: boolean }> => {
-  return apiFetch<{ plan: string | null; isPro: boolean; aiModel: string; dailyCount: number; dailyLimit: number | null; limitReached: boolean }>("/user/plan/");
+  const res = await fetch(`${API_BASE}/user/plan/`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  if (res.status === 401 || res.status === 403) {
+    return {
+      plan: null,
+      isPro: false,
+      aiModel: "llama-3.3-70b-versatile",
+      dailyCount: 0,
+      dailyLimit: 1,
+      limitReached: false,
+    };
+  }
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || data.error || data.message || `Request failed: ${res.status}`);
+  }
+
+  return res.json() as Promise<{ plan: string | null; isPro: boolean; aiModel: string; dailyCount: number; dailyLimit: number | null; limitReached: boolean }>;
 };
 
 export const activateUserPlan = async (plan: string): Promise<{ success: boolean; plan: string }> => {

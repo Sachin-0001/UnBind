@@ -32,19 +32,27 @@ def decode_access_token(token: str) -> dict:
 
 def set_auth_cookie(response: Response, token: str) -> None:
     settings = get_settings()
+    is_local_dev = settings.FRONTEND_URL.startswith("http://localhost") or settings.FRONTEND_URL.startswith("http://127.0.0.1")
     response.set_cookie(
         key=settings.COOKIE_NAME,
         value=token,
         httponly=True,
-        samesite="lax",
-        secure=False,
+        samesite="lax" if is_local_dev else "none",
+        secure=not is_local_dev,
+        path="/",
         max_age=settings.JWT_EXPIRE_DAYS * 86400,
     )
 
 
 def clear_auth_cookie(response: Response) -> None:
     settings = get_settings()
-    response.delete_cookie(key=settings.COOKIE_NAME)
+    is_local_dev = settings.FRONTEND_URL.startswith("http://localhost") or settings.FRONTEND_URL.startswith("http://127.0.0.1")
+    response.delete_cookie(
+        key=settings.COOKIE_NAME,
+        path="/",
+        secure=not is_local_dev,
+        samesite="lax" if is_local_dev else "none",
+    )
 
 
 def get_token_from_request(request: Request) -> str | None:
