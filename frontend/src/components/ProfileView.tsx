@@ -77,9 +77,9 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, analyses }) => {
   // };
 
   const [plan, setPlan] = React.useState<string | null>(null);
-  const [isPro, setIsPro] = React.useState<boolean>(user.pro === true);
+  const [isPro, setIsPro] = React.useState<boolean>(false);
   const [aiModel, setAiModel] = React.useState<string>(
-    user.aiModel || (user.pro ? "gpt-oss-120b" : "llama-3.3-70b-versatile")
+    user.aiModel || "llama-3.3-70b-versatile"
   );
   const [planLoaded, setPlanLoaded] = React.useState(false);
 
@@ -90,7 +90,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, analyses }) => {
         const data = await getUserPlan();
         if (!cancelled) {
           setPlan(data.plan);
-          setIsPro(data.isPro);
+          setIsPro(data.plan === "Brief" || data.plan === "Motion" || data.plan === "Verdict");
           setAiModel(data.aiModel);
           setPlanLoaded(true);
         }
