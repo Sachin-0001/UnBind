@@ -1,17 +1,49 @@
 import type { User, StoredAnalysis, AnalysisResponse } from "@/types";
 
-const API_BASE = "/api";
+const rawApiBase =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "/api";
+const API_BASE = rawApiBase.endsWith("/api")
+  ? rawApiBase
+  : `${rawApiBase}/api`;
+const ACCESS_TOKEN_KEY = "unbind_access_token";
+
+function getStoredAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+
+function storeAccessToken(token?: string | null): void {
+  if (typeof window === "undefined") return;
+  if (token) {
+    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+  }
+}
+
+function withAuthHeader(init?: RequestInit): RequestInit {
+  const token = getStoredAccessToken();
+  if (!token) return init || {};
+  return {
+    ...init,
+    headers: {
+      ...(init?.headers || {}),
+      Authorization: `Bearer ${token}`,
+    },
+  };
+}
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const method = (init?.method || "GET").toUpperCase();
-  const shouldSetJsonHeader = method !== "GET" && !(init?.body instanceof FormData);
+  const requestInit = withAuthHeader(init);
+  const method = (requestInit?.method || "GET").toUpperCase();
+  const shouldSetJsonHeader = method !== "GET" && !(requestInit?.body instanceof FormData);
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
     headers: {
       ...(shouldSetJsonHeader ? { "Content-Type": "application/json" } : {}),
-      ...(init?.headers || {}),
+      ...(requestInit?.headers || {}),
     },
-    ...init,
+    ...requestInit,
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -30,36 +62,44 @@ export const signup = async (
   email: string,
   password: string,
 ): Promise<User> => {
-  return apiFetch<User>("/auth/signup", {
+  const user = await apiFetch<User & { accessToken?: string }>("/auth/signup", {
     method: "POST",
     body: JSON.stringify({ username, email, password }),
   });
+  storeAccessToken(user.accessToken);
+  return user;
 };
 
 export const login = async (email: string, password: string): Promise<User> => {
-  return apiFetch<User>("/auth/login", {
+  const user = await apiFetch<User & { accessToken?: string }>("/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
+  storeAccessToken(user.accessToken);
+  return user;
 };
 
 export const logout = async (): Promise<void> => {
   await apiFetch("/auth/logout", { method: "POST" });
+  storeAccessToken(null);
 };
 
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
     return await apiFetch<User>("/auth/me");
   } catch {
+    storeAccessToken(null);
     return null;
   }
 };
 
 export const googleLogin = async (credential: string): Promise<User> => {
-  return apiFetch<User>("/auth/google", {
+  const user = await apiFetch<User & { accessToken?: string }>("/auth/google", {
     method: "POST",
     body: JSON.stringify({ credential }),
   });
+  storeAccessToken(user.accessToken);
+  return user;
 };
 
 export const updatePassword = async (
@@ -92,10 +132,13 @@ export const uploadAndAnalyze = async (
   const form = new FormData();
   form.append("file", file);
   form.append("role", role);
-  const res = await fetch(`${API_BASE}/analysis/upload`, {
+  const requestInit = withAuthHeader({
     method: "POST",
     credentials: "include",
     body: form,
+  });
+  const res = await fetch(`${API_BASE}/analysis/upload`, {
+    ...requestInit,
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -134,12 +177,10 @@ export const deleteAnalysis = async (id: string): Promise<void> => {
 // ─── User Plan ───
 
 export const getUserPlan = async (): Promise<{ plan: string | null; isPro: boolean; aiModel: string; dailyCount: number; dailyLimit: number | null; limitReached: boolean }> => {
-  const res = await fetch(`${API_BASE}/user/plan/`, {
-    method: "GET",
-    credentials: "include",
-  });
-
-  if (res.status === 401 || res.status === 403) {
+  try {
+    return await apiFetch<{ plan: string | null; isPro: boolean; aiModel: string; dailyCount: number; dailyLimit: number | null; limitReached: boolean }>("/user/plan/");
+  } catch (error) {
+    // Return default values for unauthenticated users to maintain consistency
     return {
       plan: null,
       isPro: false,
@@ -149,13 +190,6 @@ export const getUserPlan = async (): Promise<{ plan: string | null; isPro: boole
       limitReached: false,
     };
   }
-
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || data.error || data.message || `Request failed: ${res.status}`);
-  }
-
-  return res.json() as Promise<{ plan: string | null; isPro: boolean; aiModel: string; dailyCount: number; dailyLimit: number | null; limitReached: boolean }>;
 };
 
 export const activateUserPlan = async (plan: string): Promise<{ success: boolean; plan: string }> => {

@@ -50,6 +50,7 @@ async def signup(body: SignupRequest, response: Response):
         email=body.email.lower(),
         pro=False,
         aiModel=select_model(doc),
+        accessToken=token,
         createdAt=now,
     )
 
@@ -75,6 +76,7 @@ async def login(body: LoginRequest, response: Response):
         picture=user.get("picture"),
         pro=user.get("pro", False),
         aiModel=select_model(user),
+        accessToken=token,
         createdAt=user.get("createdAt")
     )
 
@@ -203,5 +205,6 @@ async def google_login(body: GoogleLoginRequest, response: Response):
         picture=picture,
         pro=pro,
         aiModel=select_model(user if user else {"pro": pro}),
+        accessToken=token,
         createdAt=created_at,
     )

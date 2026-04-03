@@ -1,7 +1,7 @@
 from typing import Any
 
 FREE_MODEL = "llama-3.3-70b-versatile"
-PRO_MODEL = "openai/gpt-oss-120b"
+PRO_MODEL = "llama-3.3-70b-versatile"
 
 
 def select_model(user: dict[str, Any] | None) -> str:

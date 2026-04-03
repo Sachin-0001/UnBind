@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://unbind-backend.vercel.app";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const nextConfig = {
   async rewrites() {

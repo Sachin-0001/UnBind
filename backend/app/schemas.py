@@ -23,6 +23,7 @@ class UserResponse(BaseModel):
     pro: bool = False
     plan: Optional[str] = None
     aiModel: Optional[str] = None
+    accessToken: Optional[str] = None
     createdAt: Optional[datetime] = None
 
 
