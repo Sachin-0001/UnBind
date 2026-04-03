@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from bson import ObjectId
@@ -11,17 +13,36 @@ class PlanRequest(BaseModel):
     plan: str
 
 @router.post("/activate")
-async def activate_plan(data: PlanRequest, request: Request):
+async def activate_plan(request: Request):
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(status_code=422, detail="Invalid JSON body")
+
+    # Some clients/proxies can send a JSON string instead of an object.
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except Exception:
+            raise HTTPException(status_code=422, detail="Invalid JSON body")
+
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=422, detail="Invalid request body")
+
+    plan = payload.get("plan")
+    if not isinstance(plan, str):
+        raise HTTPException(status_code=422, detail="Field 'plan' is required")
+
     user_id = await get_current_user_id(request)
-    if data.plan not in ["Brief", "Motion", "Verdict"]:
+    if plan not in ["Brief", "Motion", "Verdict"]:
         raise HTTPException(status_code=400, detail="Invalid plan")
     
     db = get_db()
     await db.users.update_one(
         {"_id": ObjectId(user_id)},
-        {"$set": {"plan": data.plan, "pro": True}}
+        {"$set": {"plan": plan, "pro": True}}
     )
-    return {"success": True, "plan": data.plan}
+    return {"success": True, "plan": plan}
 
 @router.post("/cancel")
 async def cancel_plan(request: Request):
