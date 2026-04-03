@@ -2,11 +2,6 @@ import type { User, StoredAnalysis, AnalysisResponse } from "@/types";
 
 const API_BASE = "/api";
 const ACCESS_TOKEN_KEY = "unbind_access_token";
-const DIRECT_BACKEND_BASE = (() => {
-  const raw = process.env.NEXT_PUBLIC_API_URL;
-  if (!raw) return null;
-  return raw.replace(/\/+$/, "").replace(/\/api$/, "");
-})();
 
 function getStoredAccessToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -139,10 +134,7 @@ export const uploadAndAnalyze = async (
     credentials: "include",
     body: form,
   });
-  const uploadUrl = DIRECT_BACKEND_BASE
-    ? `${DIRECT_BACKEND_BASE}/api/analysis/upload`
-    : `${API_BASE}/analysis/upload`;
-  const res = await fetch(uploadUrl, {
+  const res = await fetch(`${API_BASE}/analysis/upload`, {
     ...requestInit,
   });
   if (!res.ok) {
