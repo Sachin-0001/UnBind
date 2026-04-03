@@ -3,9 +3,14 @@ import type { User, StoredAnalysis, AnalysisResponse } from "@/types";
 const API_BASE = "/api";
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const method = (init?.method || "GET").toUpperCase();
+  const shouldSetJsonHeader = method !== "GET" && !(init?.body instanceof FormData);
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
+    headers: {
+      ...(shouldSetJsonHeader ? { "Content-Type": "application/json" } : {}),
+      ...(init?.headers || {}),
+    },
     ...init,
   });
   if (!res.ok) {
