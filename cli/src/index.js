@@ -25,7 +25,7 @@ function printHelp() {
       '  ' + chalk.bold('Options:'),
       '    ' +
         chalk.yellow('--server <url>') +
-        '    Backend URL  (default: http://localhost:8000)',
+        '    Backend URL  (default: https://unbind-backend.vercel.app)',
       '    ' + chalk.yellow('--logout') + '          Clear stored credentials',
       '    ' + chalk.yellow('-h, --help') + '        Show this help message',
       '',

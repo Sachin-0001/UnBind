@@ -15,10 +15,12 @@ const store = new Conf({
     },
     apiUrl: {
       type: 'string',
-      default: 'http://localhost:8000',
+      default: 'https://unbind-backend.vercel.app',
     },
   },
 });
+
+const DEFAULT_API_URL = 'https://unbind-backend.vercel.app';
 
 /** Returns the stored JWT (empty string if none). */
 export const getToken = () => store.get('token');
@@ -31,12 +33,17 @@ export const clearToken = () => store.delete('token');
 
 /**
  * Backend base URL.
- * Priority: UNBINDAI_API_URL env var > stored config > default localhost.
+ * Priority: UNBINDAI_API_URL env var > stored config > default deployed backend.
  */
 export const getApiUrl = () =>
   process.env.UNBINDAI_API_URL ||
-  store.get('apiUrl') ||
-  'http://localhost:8000';
+  (() => {
+    const storedUrl = (store.get('apiUrl') || '').toString().replace(/\/$/, '');
+    if (!storedUrl || storedUrl === 'http://localhost:8000' || storedUrl === 'http://127.0.0.1:8000') {
+      return DEFAULT_API_URL;
+    }
+    return storedUrl;
+  })();
 
 /** Persists a custom API base URL. */
 export const setApiUrl = (url) => store.set('apiUrl', url.replace(/\/$/, ''));

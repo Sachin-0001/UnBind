@@ -26,7 +26,7 @@ const accent = chalk.hex('#5C6BC0');
 //      ╔═╧═╧═╗             ← base cap
 //      ╚═════╝
 
-export function printBanner(version = '1.0.0') {
+export function printBanner(version = '1.0.18') {
   const c = accent;       // coral — beam, chains, pans
   const d = chalk.dim;    // dim   — pillar, base
 
