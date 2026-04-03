@@ -36,6 +36,8 @@ async def signup(body: SignupRequest, response: Response):
         "email": body.email.lower(),
         "passwordHash": password_hash,
         "picture": None,
+        "plan": None,
+        "pro": False,
         "createdAt": now
     }
     result = await db.users.insert_one(doc)
@@ -74,7 +76,8 @@ async def login(body: LoginRequest, response: Response):
         username=user["username"],
         email=user["email"],
         picture=user.get("picture"),
-        pro=user.get("pro", False),
+        pro=user.get("plan") in ["Brief", "Motion", "Verdict"],
+        plan=user.get("plan"),
         aiModel=select_model(user),
         accessToken=token,
         createdAt=user.get("createdAt")
@@ -101,7 +104,7 @@ async def me(request: Request):
         username=user["username"],
         email=user["email"],
         picture=user.get("picture"),
-        pro=user.get("pro", False),
+        pro=user.get("plan") in ["Brief", "Motion", "Verdict"],
         plan=user.get("plan"),
         aiModel=select_model(user),
         createdAt=user.get("createdAt"),
@@ -186,6 +189,7 @@ async def google_login(body: GoogleLoginRequest, response: Response):
             "passwordHash": None,
             "googleSub": google_sub,
             "picture": picture,
+            "plan": None,
             "pro": False,
             "createdAt": now,
         }

@@ -72,6 +72,16 @@ async def get_plan(request: Request):
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     plan = user.get("plan")
+    if plan not in ["Brief", "Motion", "Verdict"]:
+        plan = None
+
+    # Keep legacy user documents consistent with plan-driven entitlement.
+    computed_pro = plan is not None
+    if user.get("pro", False) != computed_pro:
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"pro": computed_pro, "plan": plan}},
+        )
     limit = PLAN_LIMITS.get(plan, 1)
 
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -80,7 +90,7 @@ async def get_plan(request: Request):
 
     return {
         "plan": plan,
-        "isPro": user.get("pro", False),
+        "isPro": computed_pro,
         "aiModel": select_model(user),
         "dailyCount": daily_count,
         "dailyLimit": limit,  # None means unlimited
