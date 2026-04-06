@@ -20,7 +20,7 @@ export default function UploadPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) router.replace("/login");
+    if (!user) router.replace("/");
   }, [user, router]);
 
   const handleStartAnalysis = useCallback(

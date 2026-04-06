@@ -16,7 +16,7 @@ export default function AnalysisPage() {
 
   useEffect(() => {
     if (!user) {
-      router.replace("/login");
+      router.replace("/");
       return;
     }
     const stored = sessionStorage.getItem("currentAnalysis");

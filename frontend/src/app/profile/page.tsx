@@ -12,7 +12,7 @@ export default function ProfilePage() {
   const router = useRouter();
   useEffect(() => {
     if (authReady && !user) {
-      router.replace("/login");
+      router.replace("/");
     }
   }, [authReady, user, router]);
 

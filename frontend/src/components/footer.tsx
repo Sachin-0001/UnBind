@@ -10,7 +10,7 @@ const footer = () => {
                <span className="text-sm text-gray-500 font-medium">UnBind</span>
              </div>
              <p className="text-xs text-gray-600">
-                UnBind is Not a substitute for legal advice.
+                UnBind is not a substitute for legal counsel.
              </p>
            </div>
          </footer>
