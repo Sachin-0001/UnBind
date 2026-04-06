@@ -6,6 +6,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { activateUserPlan } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
+
+const TerminalIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <polyline points="4 17 10 11 4 5" /><line x1="12" x2="20" y1="19" y2="19" />
+  </svg>
+);
 export default function Pricing() {
     const router = useRouter();
   const { user, authReady } = useAuth();
@@ -260,10 +266,10 @@ export default function Pricing() {
                     <span className="text-green-400 mt-1">✓</span>
                     <span className="font-semibold">Unlimited Analysis</span>
                   </li>
-                   <li className="flex items-start gap-2 text-purple-100">
-                    <span className="text-green-400 mt-1">✓</span>
-                    <span className="font-semibold">CLI tool access</span>
-                  </li>
+                   <li className="flex items-start gap-2 text-sm">
+                  <TerminalIcon className="h-4 w-4 text-indigo-400 mt-0.5 shrink-0" />
+                  <span className="text-indigo-300 font-semibold">CLI tool access (exclusive)</span>
+                </li>
                 </ul>
                 {/* <Link href="/checkout?plan=pro3"> */}
                   <button className={btnClass("Verdict")} onClick={() => handleSelectPlan("Verdict")} disabled={isDisabled("Verdict")}>

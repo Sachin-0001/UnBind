@@ -406,7 +406,7 @@ const LandingPage: React.FC = () => {
               </ul>
               <button
                 onClick={() => router.push("/login")}
-                className="w-full py-2.5 cursor-pointer rounded-lg font-semibold text-indigo-300 bg-white/5 border border-indigo-500/30 hover:bg-indigo-500/10 transition-colors"
+                className="w-full py-2.5 rounded-lg cursor-pointer font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors"
               >
                 Get Brief
               </button>
@@ -415,9 +415,9 @@ const LandingPage: React.FC = () => {
             {/* Motion — Popular */}
             <div className="glass-card rounded-2xl p-6 flex flex-col relative border-2 border-indigo-500/60!">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="bg-indigo-600 text-white px-3 py-0.5 rounded-full text-xs font-semibold">
-                  POPULAR
-                </span>
+                <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-0.5 rounded-full text-xs font-semibold">
+                      POPULAR
+                    </span>
               </div>
               <h3 className="text-xl font-bold text-white mb-1">Motion</h3>
               <div className="flex items-baseline gap-1 mb-4">
@@ -473,7 +473,7 @@ const LandingPage: React.FC = () => {
               </ul>
               <button
                 onClick={() => router.push("/login")}
-                className="w-full py-2.5 cursor-pointer rounded-lg font-semibold text-indigo-300 bg-white/5 border border-indigo-500/30 hover:bg-indigo-500/10 transition-colors"
+                className="w-full py-2.5 rounded-lg cursor-pointer font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors"
               >
                 Get Verdict
               </button>
