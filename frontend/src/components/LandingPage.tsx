@@ -121,7 +121,7 @@ const LandingPage: React.FC = () => {
                     <ul className="list-disc space-y-1 pl-4 whitespace-normal">
                       <li>Available only for Verdict plan users</li>
                       <li>
-                        Node.js v14+ required.{' '}
+                        Node.js v18+ required.{' '}
                         <a
                           href="https://nodejs.org/en"
                           target="_blank"

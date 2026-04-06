@@ -26,7 +26,7 @@ const accent = chalk.hex('#5C6BC0');
 //      ╔═╧═╧═╗             ← base cap
 //      ╚═════╝
 
-export function printBanner(version = '1.0.18') {
+export function printBanner(version = '1.0.3') {
   const c = accent;       // coral — beam, chains, pans
   const d = chalk.dim;    // dim   — pillar, base
 
@@ -80,18 +80,125 @@ export function printBanner(version = '1.0.18') {
 }
 
 // ─── Spinner ──────────────────────────────────────────────────────────────────
-// Braille dots, no colour override — matches Claude Code's subtle animation.
+// Claude Code style: random legal/law-specific names cycling through.
+// Theme color: indigo with wave effect across the text.
+
+const LEGAL_TERMS = [
+  // A
+  'Acquitting',
+  'Affirming',
+  'Alleging',
+  'Appealing',
+  'Arbitrating',
+  // B
+  'Bailing',
+  'Breaching',
+  'Briefing',
+  // C
+  'Certifying',
+  'Citing',
+  'Claiming',
+  'Codifying',
+  'Contracting',
+  // D
+  'Decreeing',
+  'Defending',
+  'Delegating',
+  'Deposing',
+  'Drafting',
+  // E
+  'Enforcing',
+  'Enjoining',
+  'Executing',
+  'Exhibiting',
+  // F
+  'Filing',
+  'Foreclosing',
+  'Forfeiting',
+  // G
+  'Garnishing',
+  'Governing',
+  'Guaranteeing',
+  // H
+  'Harboring',
+  'Hearing',
+  // I
+  'Indemnifying',
+  'Indicting',
+  'Injuncting',
+  // J
+  'Judging',
+  'Jurisdicting',
+  // L
+  'Litigating',
+  // M
+  'Mediating',
+  // N
+  'Notarizing',
+  // O
+  'Objecting',
+  'Obligating',
+  // P
+  'Petitioning',
+  'Pleading',
+  'Prosecuting',
+  // Q
+  'Questioning',
+  // R
+  'Remanding',
+  'Restituting',
+  // S
+  'Subpoenaing',
+  'Sentencing',
+  // T
+  'Testifying',
+  // V
+  'Vacating',
+  // W
+  'Warranting',
+];
+
+// Indigo color palette for wave effect
+const INDIGO_PALETTE = [
+  chalk.hex('#5C6BC0'),      // main theme
+  chalk.hex('#6B7FD1'),      // lighter
+  chalk.hex('#7A92E3'),      // lighter still
+  chalk.hex('#6B7FD1'),      // back to medium
+];
+
+function randomLegalName() {
+  return LEGAL_TERMS[Math.floor(Math.random() * LEGAL_TERMS.length)];
+}
+
+function applyWaveEffect(text, offset) {
+  return text
+    .split('')
+    .map((char, i) => {
+      const colorIndex = (i + offset) % INDIGO_PALETTE.length;
+      return INDIGO_PALETTE[colorIndex](char);
+    })
+    .join('');
+}
 
 export function createSpinner(text) {
-  return ora({
+  // Single random legal term with wave animation frames
+  const term = randomLegalName();
+  
+  // Create 8 frames of the legal term with color wave effect
+  const frames = Array(8)
+    .fill(0)
+    .map((_, offset) => applyWaveEffect(term, offset));
+  
+  const spinner = ora({
     text,
-    color: 'white',
     spinner: {
-      interval: 80,
-      frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
+      interval: 100,
+      frames,
     },
     prefixText: '  ',
   });
+
+  return spinner;
 }
 
 // ─── Risk helpers ─────────────────────────────────────────────────────────────

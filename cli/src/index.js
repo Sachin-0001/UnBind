@@ -118,7 +118,7 @@ export async function main(rawArgs) {
   // Upload & analyse
   const fileName = path.basename(filePath);
   const spin = createSpinner(
-    `Uploading and analysing ${chalk.bold(fileName)}…`
+    `\nUploading and analysing ${chalk.bold(fileName)}…`
   ).start();
 
   let analysis;
@@ -137,7 +137,7 @@ export async function main(rawArgs) {
 // ─── list command ─────────────────────────────────────────────────────────────
 
 async function listCommand() {
-  const spin = createSpinner('Fetching your analysis history…').start();
+  const spin = createSpinner('\nFetching your analysis history…').start();
 
   let history;
   try {
