@@ -108,7 +108,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   const [limitReached, setLimitReached] = React.useState(false);
   const [dailyCount, setDailyCount] = React.useState(0);
   const [dailyLimit, setDailyLimit] = React.useState<number | null>(1);
-  const [planLoaded, setPlanLoaded] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -120,28 +119,23 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           setLimitReached(data.limitReached);
           setDailyCount(data.dailyCount);
           setDailyLimit(data.dailyLimit);
-          setPlanLoaded(true);
         }
       } catch {
         if (!cancelled) {
           setPlan(null);
-          setLimitReached(false);
-          setDailyCount(0);
-          setDailyLimit(1);
-          setPlanLoaded(true);
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [analyses.length]);
+  }, []);
 
   // Treat the user as "pro" if either:
   // - the auth user object says pro === true, or
   // - their active plan is one of the paid tiers.
   const isPaidPlan = plan === "Brief" || plan === "Motion" || plan === "Verdict";
-  const isProUser = isPaidPlan;
+  const isProUser = user.pro === true || isPaidPlan;
   return (
     <div className="space-y-10 fade-in">
       <div className="relative">
@@ -159,9 +153,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           onMouseLeave={() => setShowTooltip(false)}
         >
           Active Plan:
-          {!planLoaded ? (
-            <span className="ml-1 text-gray-400">Loading...</span>
-          ) : isProUser ? (
+          {isProUser ? (
             <span className="ml-1 text-green-400">{plan}</span>
           ) : !isProUser ? (
             <span className="ml-1 text-red-400">Free</span>

@@ -12,7 +12,6 @@ from app.services.pdf_processing import chunk_text, convert_pdf_to_markdown
 
 
 logger = logging.getLogger(__name__)
-MAX_PARALLEL_CHUNK_ANALYSIS = 2
 
 
 # ───── Helpers ─────
@@ -234,13 +233,9 @@ async def analyze_contract(
     chunks = chunk_text(markdown_text)
 
     progress(f"Analyzing {len(chunks)} document section(s)...")
-    semaphore = asyncio.Semaphore(MAX_PARALLEL_CHUNK_ANALYSIS)
-
-    async def run_chunk(chunk: str) -> tuple[list[dict], bool]:
-        async with semaphore:
-            return await _analyze_chunk(chunk, role, user_id=user_id)
-
-    chunk_results = await asyncio.gather(*[run_chunk(chunk) for chunk in chunks])
+    chunk_results = await asyncio.gather(
+        *[_analyze_chunk(chunk, role, user_id=user_id) for chunk in chunks]
+    )
     all_clauses: list[dict] = []
     parse_failures = 0
     for clauses, had_parse_failure in chunk_results:

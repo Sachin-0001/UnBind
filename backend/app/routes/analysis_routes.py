@@ -1,5 +1,4 @@
 import io
-import logging
 from datetime import datetime, timezone
 
 from bson import ObjectId
@@ -10,7 +9,6 @@ from app.database import get_db
 from app.services.analysis_service import analyze_contract, simulate_impact
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
-logger = logging.getLogger(__name__)
 
 # Daily analysis limits per plan (None = unlimited)
 PLAN_LIMITS: dict[str | None, int | None] = {
@@ -63,39 +61,6 @@ async def _enforce_rate_limit(user_id: str) -> None:
     )
 
 
-def _raise_analysis_http_error(exc: Exception) -> None:
-    """Map provider/runtime errors to stable HTTP responses."""
-    status_code = getattr(exc, "status_code", None)
-    message = str(exc)
-    message_lc = message.lower()
-
-    # Groq/API token and throughput limits
-    if status_code == 429 or "rate_limit_exceeded" in message_lc or "rate limit" in message_lc:
-        raise HTTPException(
-            status_code=429,
-            detail=(
-                "AI provider rate limit reached. Please wait a few minutes and try again, "
-                "or upgrade your model/provider quota."
-            ),
-        )
-
-    # Prompt/token payload too large for selected model window
-    if status_code == 413 or "request too large" in message_lc:
-        raise HTTPException(
-            status_code=413,
-            detail=(
-                "Document is too large for the current model limits. "
-                "Try a shorter document or split it into smaller sections."
-            ),
-        )
-
-    if isinstance(exc, RuntimeError):
-        raise HTTPException(status_code=422, detail=message)
-
-    logger.exception("Unhandled analysis error", exc_info=exc)
-    raise HTTPException(status_code=500, detail="Analysis failed due to a temporary server error.")
-
-
 @router.post("/analyze")
 async def analyze(body: AnalyzeRequest, request: Request):
     """Analyse contract text and return the full result."""
@@ -104,8 +69,8 @@ async def analyze(body: AnalyzeRequest, request: Request):
 
     try:
         result = await analyze_contract(body.text, body.role, user_id=user_id)
-    except Exception as e:
-        _raise_analysis_http_error(e)
+    except RuntimeError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
     # Persist to DB
     db = get_db()
@@ -155,8 +120,8 @@ async def upload_and_analyze(
 
     try:
         result = await analyze_contract(text, role, user_id=user_id)
-    except Exception as e:
-        _raise_analysis_http_error(e)
+    except RuntimeError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
     # Persist
     db = get_db()
@@ -237,10 +202,7 @@ async def delete_analysis(analysis_id: str, request: Request):
 async def simulate(body: SimulateRequest, request: Request):
     """Run a what-if impact simulation against the contract text."""
     user_id = await get_current_user_id(request)
-    try:
-        result = await simulate_impact(body.documentText, body.scenario, user_id=user_id)
-    except Exception as e:
-        _raise_analysis_http_error(e)
+    result = await simulate_impact(body.documentText, body.scenario, user_id=user_id)
     return {"result": result}
 
 
