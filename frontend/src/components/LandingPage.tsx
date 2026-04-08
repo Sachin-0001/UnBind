@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   LogoIcon,
@@ -12,6 +12,7 @@ import {
   AlertTriangleIcon,
 } from "./Icons";
 import { Herr_Von_Muellerhoff } from "next/font/google";
+import ScreenshotFrame from "./ScreenshotFrame";
 
 const TerminalIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -49,9 +50,46 @@ const ArrowRightIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+const ChevronDownIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+
 const LandingPage: React.FC = () => {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const sections = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-reveal]")
+    );
+
+    if (sections.length === 0) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            return;
+          }
+
+          entry.target.classList.add("scroll-reveal-visible");
+          observer.unobserve(entry.target);
+        });
+      },
+      {
+        threshold: 0.18,
+        rootMargin: "0px 0px -8% 0px",
+      }
+    );
+
+    sections.forEach((section) => observer.observe(section));
+
+    return () => observer.disconnect();
+  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText("npm install -g unbindai");
@@ -62,7 +100,7 @@ const LandingPage: React.FC = () => {
   return (
     <div className="w-full fade-in">
       {/* Hero */}
-      <section className="pt-20 sm:pt-28 lg:pt-36 pb-16 sm:pb-20 relative overflow-hidden">
+      <section className="pt-12 sm:pt-16 lg:pt-24 pb-16 sm:pb-20 relative overflow-hidden">
         {/* Subtle grid background */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] bg-size-[64px_64px]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-200 h-150 bg-indigo-500/5 rounded-full blur-3xl" />
@@ -152,35 +190,36 @@ const LandingPage: React.FC = () => {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Hero Screenshot Placeholder */}
-      <section className="pb-16 sm:pb-24">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-xl border border-gray-700/50 bg-gray-900/60 backdrop-blur-sm overflow-hidden shadow-2xl shadow-indigo-500/10">
-            {/* Window chrome */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-700/50 bg-gray-900/80">
-              <div className="w-3 h-3 rounded-full bg-red-500/70" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
-              <div className="w-3 h-3 rounded-full bg-green-500/70" />
-              <span className="ml-3 text-xs text-gray-500 font-mono">unbind — contract analysis</span>
-            </div>
-            {/* Placeholder image area */}
-            <div className="aspect-video bg-linear-to-br from-gray-800/50 to-gray-900/50 flex items-center justify-center">
-              <div className="text-center">
-                <FileTextIcon className="h-16 w-16 text-indigo-500/30 mx-auto mb-4" />
-                <p className="text-gray-500 text-sm font-medium">App Screenshot — Risk Analysis Dashboard</p>
-                <p className="text-gray-600 text-xs mt-1"></p>
+            <div className="mt-10 flex justify-center">
+              <div className="flex flex-col items-center text-gray-500 animate-float-y" aria-hidden="true">
+                <ChevronDownIcon className="h-5 w-5" />
+                <ChevronDownIcon className="-mt-2 h-5 w-5 opacity-70" />
               </div>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Hero Screenshot Placeholder */}
+      <section className="scroll-reveal pb-16 sm:pb-24" data-reveal>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center">
+            <ScreenshotFrame
+              src="/analysis.png"
+              alt="Risk analysis dashboard preview"
+              title="Risk Analysis Dashboard"
+              showUrlBar
+              url="unbindai.vercel.app/analysis"
+              maxWidth={1080}
+              priority
+            />
+          </div>
+        </div>
+      </section>
+
       {/* Features Grid */}
-      <section className="py-16 sm:py-24">
+      <section className="scroll-reveal py-16 sm:py-24" data-reveal>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-white">
@@ -248,7 +287,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* CLI Section */}
-      <section className="py-16 sm:py-24 border-t border-gray-800/50">
+      <section className="scroll-reveal py-16 sm:py-24 border-t border-gray-800/50" data-reveal>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -324,7 +363,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* How it works */}
-      <section className="py-16 sm:py-24 border-t border-gray-800/50">
+      <section className="scroll-reveal py-16 sm:py-24 border-t border-gray-800/50" data-reveal>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-white">How it works</h2>
@@ -337,31 +376,39 @@ const LandingPage: React.FC = () => {
                 step: "01",
                 title: "Upload your contract",
                 desc: "Drag and drop any PDF contract. We support NDAs, employment agreements, SaaS terms, and more.",
-                placeholder: "Upload UI Screenshot",
+                image: "/upload.png",
+                imageAlt: "Upload contract interface preview",
+                frameTitle: "Upload Contract",
               },
               {
                 step: "02",
                 title: "AI analyzes every clause",
                 desc: "Our AI reads each clause, scores risk levels, extracts key dates, and generates plain-English summaries.",
-                placeholder: "Analysis View Screenshot",
+                image: "/clause.png",
+                imageAlt: "Clause analysis preview",
+                frameTitle: "Clause Analysis",
               },
               {
                 step: "03",
                 title: "Review and negotiate",
                 desc: "Explore risks, get alternative clauses, simulate scenarios, and export a full report as PDF.",
-                placeholder: "Report View Screenshot",
+                image: "/nego.png",
+                imageAlt: "Negotiation helper preview",
+                frameTitle: "Negotiation Helper",
               },
             ].map((step, i) => (
               <div key={i} className="text-center">
                 <div className="text-5xl font-extrabold text-indigo-500/20 mb-4">{step.step}</div>
-                {/* Image placeholder */}
-                <div className="rounded-lg border border-gray-700/50 bg-gray-900/60 aspect-4/3 flex items-center justify-center mb-6">
-                  <div className="text-center px-4">
-                    <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-2">
-                      <FileTextIcon className="h-5 w-5 text-indigo-400" />
-                    </div>
-                    <p className="text-gray-600 text-xs">{step.placeholder}</p>
-                  </div>
+                <div className="mb-6 flex justify-center">
+                  <ScreenshotFrame
+                    src={step.image}
+                    alt={step.imageAlt}
+                    title={step.frameTitle}
+                    showControls={false}
+                    maxWidth={320}
+                    contentClassName="aspect-4/3 overflow-hidden"
+                    imageClassName="h-full object-cover object-top"
+                  />
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">{step.title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{step.desc}</p>
@@ -372,7 +419,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Pricing Plans */}
-      <section className="py-16 sm:py-24 border-t border-gray-800/50">
+      <section className="scroll-reveal py-16 sm:py-24 border-t border-gray-800/50" data-reveal>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-white">
@@ -483,7 +530,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Extra features row */}
-      <section className="py-16 sm:py-24 border-t border-gray-800/50">
+      <section className="scroll-reveal py-16 sm:py-24 border-t border-gray-800/50" data-reveal>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* PDF Export card */}
@@ -496,9 +543,16 @@ const LandingPage: React.FC = () => {
                   with your negotiated clause changes applied — ready to send to the other party.
                 </p>
               </div>
-              {/* Image placeholder */}
-              <div className="mt-6 rounded-lg border border-gray-700/40 bg-gray-800/30 aspect-2/1 flex items-center justify-center">
-                <p className="text-gray-600 text-xs">PDF Export Screenshot</p>
+              <div className="mt-6 flex justify-center">
+                <ScreenshotFrame
+                  src="/export.png"
+                  alt="PDF export report preview"
+                  title="PDF Export"
+                  showControls={false}
+                  maxWidth={520}
+                  contentClassName="aspect-2/1 overflow-hidden"
+                  imageClassName="h-full object-cover object-top"
+                />
               </div>
             </div>
 
@@ -512,9 +566,16 @@ const LandingPage: React.FC = () => {
                   over time, and manage your account with secure JWT-based authentication.
                 </p>
               </div>
-              {/* Image placeholder */}
-              <div className="mt-6 rounded-lg border border-gray-700/40 bg-gray-800/30 aspect-2/1 flex items-center justify-center">
-                <p className="text-gray-600 text-xs">Dashboard Screenshot</p>
+              <div className="mt-6 flex justify-center">
+                <ScreenshotFrame
+                  src="/dashboard.png"
+                  alt="Dashboard history preview"
+                  title="Dashboard"
+                  showControls={false}
+                  maxWidth={520}
+                  contentClassName="aspect-2/1 overflow-hidden"
+                  imageClassName="h-full object-cover object-top"
+                />
               </div>
             </div>
           </div>
@@ -522,7 +583,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* CTA */}
-      <section className="py-16 sm:py-24 border-t border-gray-800/50">
+      <section className="scroll-reveal py-16 sm:py-24 border-t border-gray-800/50" data-reveal>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white">
             Stop signing contracts you don&apos;t fully understand

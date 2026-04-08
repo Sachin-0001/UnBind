@@ -43,13 +43,50 @@ body {
 .fade-in {
   animation: fadeIn 0.5s ease-in-out forwards;
 }
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
+  will-change: opacity, transform;
+}
+
+.scroll-reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @keyframes tilt {
   0% { transform: rotate(-8deg); }
   50% { transform: rotate(8deg); }
   100% { transform: rotate(-8deg); }
 }
 
+@keyframes floatY {
+  0% { transform: translateY(-2px); opacity: 0.55; }
+  50% { transform: translateY(8px); opacity: 1; }
+  100% { transform: translateY(-2px); opacity: 0.55; }
+}
+
 .animate-tilt {
   animation: tilt 1.8s ease-in-out infinite;
   transform-origin: center top;
+}
+
+.animate-float-y {
+  animation: floatY 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .animate-float-y {
+    animation: none;
+  }
 }
