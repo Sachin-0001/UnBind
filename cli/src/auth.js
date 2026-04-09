@@ -23,7 +23,7 @@ export async function ensureProAccess() {
       '\n' +
       chalk.bgRed.white.bold('  ✗ CLI Access Restricted  ') +
       '\n\n' +
-      chalk.white('  The UnBindAI CLI is exclusively available to ') +
+      chalk.white('  The UnBind CLI is exclusively available to ') +
       chalk.cyan.bold('Verdict') +
       chalk.white(' subscribers.') +
       '\n\n' +

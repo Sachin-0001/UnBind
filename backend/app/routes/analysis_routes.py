@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from bson import ObjectId
 from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form
+from langsmith.run_helpers import tracing_context
 from app.schemas import AnalyzeRequest, SimulateRequest, StoredAnalysis
 from app.auth import get_current_user_id
 from app.database import get_db
@@ -68,7 +69,17 @@ async def analyze(body: AnalyzeRequest, request: Request):
     await _enforce_rate_limit(user_id)
 
     try:
-        result = await analyze_contract(body.text, body.role, user_id=user_id)
+        with tracing_context(
+            metadata={
+                "endpoint": "analysis.analyze",
+                "user_id": user_id,
+                "file_name": body.fileName,
+                "role": body.role,
+                "text_length": len(body.text or ""),
+            },
+            tags=["analysis", "api", "text"],
+        ):
+            result = await analyze_contract(body.text, body.role, user_id=user_id)
     except RuntimeError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
@@ -119,7 +130,18 @@ async def upload_and_analyze(
         )
 
     try:
-        result = await analyze_contract(text, role, user_id=user_id)
+        with tracing_context(
+            metadata={
+                "endpoint": "analysis.upload",
+                "user_id": user_id,
+                "file_name": file_name,
+                "file_content_type": file.content_type or "",
+                "role": role,
+                "text_length": len(text or ""),
+            },
+            tags=["analysis", "api", "upload"],
+        ):
+            result = await analyze_contract(text, role, user_id=user_id)
     except RuntimeError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
@@ -202,7 +224,17 @@ async def delete_analysis(analysis_id: str, request: Request):
 async def simulate(body: SimulateRequest, request: Request):
     """Run a what-if impact simulation against the contract text."""
     user_id = await get_current_user_id(request)
-    result = await simulate_impact(body.documentText, body.scenario, user_id=user_id)
+    with tracing_context(
+        metadata={
+            "endpoint": "analysis.simulate",
+            "user_id": user_id,
+            "scenario": body.scenario,
+            "scenario_length": len(body.scenario or ""),
+            "document_length": len(body.documentText or ""),
+        },
+        tags=["analysis", "api", "simulate"],
+    ):
+        result = await simulate_impact(body.documentText, body.scenario, user_id=user_id)
     return {"result": result}
 
 

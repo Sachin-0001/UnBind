@@ -1,5 +1,6 @@
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage
+from langsmith import traceable
 from app.config import get_settings
 import httpx
 from app.database import get_db
@@ -28,6 +29,8 @@ async def resolve_model(user_id: str | None) -> str:
     user = await get_user_by_id(user_id)
     return select_model(user)
 
+
+@traceable(name="chat_complete")
 async def chat_complete(
     messages: list[dict],
     model: str | None = None,
@@ -56,6 +59,7 @@ async def chat_complete(
     return response.content
 
 
+@traceable(name="embed_texts")
 async def embed_texts(
     texts: list[str],
     model: str = "text-embedding-3-small",

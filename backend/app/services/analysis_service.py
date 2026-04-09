@@ -7,6 +7,7 @@ import asyncio
 import logging
 import re
 from typing import Any, Callable, Optional
+from langsmith import traceable
 from app.services.groq_service import chat_complete, embed_texts
 from app.services.pdf_processing import chunk_text, convert_pdf_to_markdown
 
@@ -87,6 +88,7 @@ def _try_parse_json(text: str) -> Any | None:
 
 # ───── Chunk analysis ─────
 
+@traceable(name="analyze_chunk")
 async def _analyze_chunk(
     chunk: str,
     role: str,
@@ -131,6 +133,7 @@ async def _analyze_chunk(
 
 # ───── Report synthesis ─────
 
+@traceable(name="synthesize_report")
 async def _synthesize_report(
     clauses: list[dict],
     role: str,
@@ -173,6 +176,7 @@ async def _synthesize_report(
 
 # ───── Chunk summaries ─────
 
+@traceable(name="create_chunk_summaries")
 async def _create_chunk_summaries(
     chunks: list[str],
     clauses: list[dict],
@@ -214,6 +218,7 @@ async def _create_chunk_summaries(
 
 # ───── Public: analyse contract ─────
 
+@traceable(name="analyze_contract_pipeline")
 async def analyze_contract(
     document_text: str,
     role: str,
@@ -290,6 +295,7 @@ class GroqEmbeddingFunction:
             return loop.run_until_complete(embed_texts(input))
 
 
+@traceable(name="simulate_impact")
 async def simulate_impact(
     document_text: str,
     scenario: str,
