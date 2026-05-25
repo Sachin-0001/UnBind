@@ -1,5 +1,5 @@
 {
-  "name": "@sachin-0001/UnBind",
+  "name": "@sachin-0001/unbind",
   "version": "1.0.3",
   "description": "CLI REPL for UnBindAI – AI-powered legal contract analysis",
   "type": "module",
