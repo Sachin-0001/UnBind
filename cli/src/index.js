@@ -7,6 +7,7 @@ import { ensureAuth, ensureProAccess } from './auth.js';
 import { uploadAndAnalyze, getAnalysisHistory } from './api.js';
 import { startRepl } from './repl.js';
 import { printBanner, createSpinner } from './display.js';
+import { exportAnalysis } from './export.js';
 
 // ─── Help text ────────────────────────────────────────────────────────────────
 
@@ -21,12 +22,15 @@ function printHelp() {
       '    unbind ' + chalk.cyan('<document.pdf>') + '         — analyse a contract',
       '    unbind ' + chalk.cyan('<document.txt>') + '         — analyse a text file',
       '    unbind ' + chalk.cyan('list') + '                   — browse & open a past analysis',
+      '    unbind ' + chalk.cyan('export <file>') + '          — analyse & export a report (no REPL)',
       '',
       '  ' + chalk.bold('Options:'),
       '    ' +
         chalk.yellow('--server <url>') +
         '    Backend URL  (default: https://unbind-backend.vercel.app)',
       '    ' + chalk.yellow('--logout') + '          Clear stored credentials',
+      '    ' + chalk.yellow('--format <fmt>') + '   Export format: md (default) or txt',
+      '    ' + chalk.yellow('--output <path>') + '   Output file path for export',
       '    ' + chalk.yellow('-h, --help') + '        Show this help message',
       '',
       '  ' + chalk.bold('Environment:'),
@@ -34,8 +38,9 @@ function printHelp() {
         chalk.yellow('UNBINDAI_API_URL') +
         '  Override the backend URL without a flag',
       '',
-      '  ' + chalk.bold('Example:'),
+      '  ' + chalk.bold('Examples:'),
       '    ' + chalk.dim('$ unbind ~/contracts/employment.pdf'),
+      '    ' + chalk.dim('$ unbind export contract.pdf --format md --output report.md'),
       '    ' + chalk.dim('$ unbind --server https://api.example.com contract.pdf'),
       '',
     ].join('\n')
@@ -79,6 +84,12 @@ export async function main(rawArgs) {
     printBanner();
     await ensureAuth();
     await listCommand();
+    process.exit(0);
+  }
+
+  // ── export ─────────────────────────────────────────────────────────────────
+  if (command === 'export') {
+    await exportCommand(args.slice(1));
     process.exit(0);
   }
 
@@ -192,4 +203,75 @@ async function listCommand() {
   }
 
   await startRepl(selected);
+}
+
+// ─── export command ───────────────────────────────────────────────────────────
+
+/**
+ * unbind export <file> [--format md|txt] [--output path]
+ *
+ * Uploads and analyses the document, then immediately writes the report to
+ * disk without opening the interactive REPL.
+ */
+async function exportCommand(args) {
+  printBanner();
+
+  // ── Parse flags ─────────────────────────────────────────────────────────────
+  const formatIdx = args.indexOf('--format');
+  const format = formatIdx !== -1 ? args[formatIdx + 1] : 'md';
+
+  const outputIdx = args.indexOf('--output');
+  const outputPath = outputIdx !== -1 ? args[outputIdx + 1] : undefined;
+
+  // Remove parsed flags to find the file arg
+  const cleanArgs = args.filter((a, i) => {
+    if (a === '--format' || a === '--output') return false;
+    if (i > 0 && (args[i - 1] === '--format' || args[i - 1] === '--output')) return false;
+    return true;
+  });
+
+  const fileArg = cleanArgs[0];
+
+  if (!fileArg) {
+    console.error(chalk.red('\n  ✗ Usage: unbind export <file> [--format md|txt] [--output path]\n'));
+    process.exit(1);
+  }
+
+  if (format !== 'md' && format !== 'txt') {
+    console.error(chalk.red(`\n  ✗ Unknown format "${format}". Use md or txt.\n`));
+    process.exit(1);
+  }
+
+  const filePath = path.resolve(fileArg);
+
+  if (!fs.existsSync(filePath)) {
+    console.error(chalk.red(`\n  ✗ File not found: ${fileArg}\n`));
+    process.exit(1);
+  }
+
+  // ── Auth ────────────────────────────────────────────────────────────────────
+  await ensureAuth();
+  await ensureProAccess();
+
+  // ── Upload & analyse ────────────────────────────────────────────────────────
+  const fileName = path.basename(filePath);
+  const spin = createSpinner(`\nUploading and analysing ${chalk.bold(fileName)}…`).start();
+
+  let analysis;
+  try {
+    analysis = await uploadAndAnalyze(filePath);
+    spin.succeed(`Analysis complete  ${chalk.dim(`(${fileName})`)}`);
+  } catch (err) {
+    spin.fail(chalk.red(err.message));
+    process.exit(1);
+  }
+
+  // ── Export ──────────────────────────────────────────────────────────────────
+  console.log();
+  try {
+    exportAnalysis(analysis, { outputPath, format });
+  } catch (err) {
+    console.error(chalk.red(`\n  ✗ ${err.message}\n`));
+    process.exit(1);
+  }
 }

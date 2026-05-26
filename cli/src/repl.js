@@ -1,5 +1,6 @@
 import inquirer from 'inquirer';
 import chalk from 'chalk';
+import path from 'path';
 import {
   printSummary,
   printPlainEnglish,
@@ -8,6 +9,7 @@ import {
   createSpinner,
 } from './display.js';
 import { askQuestion } from './api.js';
+import { exportAnalysis } from './export.js';
 
 // ─── Menu definition ──────────────────────────────────────────────────────────
 
@@ -16,8 +18,9 @@ const MENU = [
   { name: `${chalk.bold('2.')} Translate to plain English`, value: 'translate', short: 'Translate' },
   { name: `${chalk.bold('3.')} Ask a question`, value: 'ask', short: 'Ask a question' },
   { name: `${chalk.bold('4.')} Extract clauses`, value: 'clauses', short: 'Extract clauses' },
+  { name: `${chalk.bold('5.')} Export report`, value: 'export', short: 'Export report' },
   new inquirer.Separator(chalk.dim('─────────────────────')),
-  { name: `${chalk.bold('5.')} Exit`, value: 'exit', short: 'Exit' },
+  { name: `${chalk.bold('6.')} Exit`, value: 'exit', short: 'Exit' },
 ];
 
 // ─── REPL ─────────────────────────────────────────────────────────────────────
@@ -108,7 +111,48 @@ export async function startRepl(analysis, opts = {}) {
         printClauses(analysisResult);
         break;
 
-      // ── 5. Exit ───────────────────────────────────────────────────────────
+      // ── 5. Export report ──────────────────────────────────────────────────
+      case 'export': {
+        // Ask for format
+        const { format } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'format',
+            message: chalk.bold('Output format:'),
+            choices: [
+              { name: 'Markdown  (.md)', value: 'md' },
+              { name: 'Plain text (.txt)', value: 'txt' },
+            ],
+            default: 'md',
+          },
+        ]);
+
+        // Suggest a default filename based on the document
+        const baseName = path.basename(
+          fileName ?? 'unbind-report',
+          path.extname(fileName ?? '')
+        );
+        const defaultOut = `${baseName}-unbind-report.${format}`;
+
+        const { outputPath } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'outputPath',
+            message: chalk.bold('Save to:'),
+            default: defaultOut,
+          },
+        ]);
+
+        console.log();
+        try {
+          exportAnalysis(analysis, { outputPath: outputPath.trim(), format });
+        } catch (err) {
+          console.log(chalk.red(`  ✘  ${err.message}`));
+        }
+        break;
+      }
+
+      // ── 6. Exit ───────────────────────────────────────────────────────────
       case 'exit':
         console.log(chalk.cyan('\n  Goodbye! 👋\n'));
         process.exit(0);
