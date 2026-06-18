@@ -147,14 +147,12 @@ async def contact_lawyer(lawyer_id: str, request: ContactLawyerRequest, http_req
     }
     result = await db.lawyer_contact_requests.insert_one(contact_request_doc)
 
-    # Fire-and-forget: send email to the lawyer (never blocks the response)
-    asyncio.create_task(
-        send_lawyer_contact_email(
-            lawyer_email=lawyer_doc["email"],
-            lawyer_name=lawyer_doc["name"],
-            user_email=request.contactEmail,
-            message=request.message,
-        )
+    # Await email sending directly so Vercel Serverless doesn't terminate/freeze the function before it finishes
+    await send_lawyer_contact_email(
+        lawyer_email=lawyer_doc["email"],
+        lawyer_name=lawyer_doc["name"],
+        user_email=request.contactEmail,
+        message=request.message,
     )
 
     return {"success": True, "requestId": str(result.inserted_id)}

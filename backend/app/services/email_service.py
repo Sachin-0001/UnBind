@@ -27,8 +27,8 @@ def _send_smtp(
     settings = get_settings()
 
     if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        logger.warning("SMTP credentials not configured — email not sent.")
-        return
+        print("[SMTP WARNING] SMTP credentials not configured (SMTP_USER or SMTP_PASSWORD is empty) — email not sent.", flush=True)
+        raise ValueError("SMTP credentials not configured on the server")
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
@@ -56,9 +56,12 @@ async def send_email(
 ) -> None:
     """Non-blocking email send. Errors are logged but never raised to callers."""
     try:
+        print(f"[SMTP] Attempting to send email to {to_email}...", flush=True)
         await asyncio.to_thread(_send_smtp, to_email, subject, html_body, reply_to)
+        print(f"[SMTP] Successfully sent email to {to_email}", flush=True)
     except Exception as exc:
-        logger.error("Failed to send email to %s: %s", to_email, exc)
+        print(f"[SMTP ERROR] Failed to send email to {to_email}: {exc}", flush=True)
+        raise exc
 
 
 # ── Pre-built template helpers ────────────────────────────────────────────────
