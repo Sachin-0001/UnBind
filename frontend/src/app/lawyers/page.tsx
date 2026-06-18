@@ -212,14 +212,14 @@ const ContactModal: React.FC<ContactModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 inline-flex justify-center items-center px-4 py-2 font-semibold text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-500 transition-colors text-sm shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 inline-flex cursor-pointer justify-center items-center px-4 py-2 font-semibold text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-500 transition-colors text-sm shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Sending…" : "Send Request"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 font-semibold text-gray-300 bg-gray-700 border border-transparent rounded-md hover:bg-gray-600 transition-colors text-sm"
+              className="cursor-pointer px-4 py-2 font-semibold text-gray-300 bg-gray-700 border border-transparent rounded-md hover:bg-gray-600 transition-colors text-sm"
             >
               Cancel
             </button>
@@ -270,12 +270,12 @@ const LawyerCard: React.FC<LawyerCardProps> = ({ lawyer, onContact }) => (
     <div className="flex items-start justify-between gap-3">
       <div className="flex items-center gap-3">
         {/* Avatar initial */}
-        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-lg font-bold shrink-0 shadow-lg">
+        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-xl font-bold shrink-0 shadow-lg">
           {lawyer.name.charAt(0)}
         </div>
         <div>
           <div className="flex items-center gap-1.5">
-            <h3 className="font-semibold text-white text-base leading-tight">
+            <h3 className="font-semibold text-white text-lg leading-tight">
               {lawyer.name}
             </h3>
             {lawyer.verified && (
@@ -298,7 +298,7 @@ const LawyerCard: React.FC<LawyerCardProps> = ({ lawyer, onContact }) => (
       {lawyer.specializations.map((s) => (
         <span
           key={s}
-          className="text-xs font-medium text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 rounded-full"
+          className="text-sm cursor-pointer font-medium text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 rounded-full"
         >
           {s}
         </span>
@@ -306,7 +306,7 @@ const LawyerCard: React.FC<LawyerCardProps> = ({ lawyer, onContact }) => (
     </div>
 
     {/* Bio */}
-    <p className="text-sm text-gray-400 leading-relaxed line-clamp-3">
+    <p className="text-md text-gray-400 leading-relaxed line-clamp-3">
       {lawyer.bio}
     </p>
 
@@ -319,7 +319,7 @@ const LawyerCard: React.FC<LawyerCardProps> = ({ lawyer, onContact }) => (
       )}
       <button
         onClick={() => onContact(lawyer)}
-        className="inline-flex items-center px-4 py-1.5 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-500 transition-colors text-sm shadow-md"
+        className="inline-flex cursor-pointer items-center px-4 py-1.5 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-500 transition-colors text-sm shadow-md"
       >
         Contact
       </button>
@@ -450,12 +450,12 @@ export default function LawyersPage() {
             </p>
             <div className="flex gap-3 flex-col sm:flex-row">
               <Link href="/pricing" className="flex-1">
-                <button className="w-full inline-flex justify-center items-center px-4 py-2 font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-md hover:from-indigo-500 hover:to-purple-500 transition-all text-sm shadow-lg">
+                <button className="w-full cursor-pointer inline-flex justify-center items-center px-4 py-2 font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-md hover:from-indigo-500 hover:to-purple-500 transition-all text-sm shadow-lg">
                   View Pricing
                 </button>
               </Link>
               <Link href="/dashboard" className="flex-1">
-                <button className="w-full px-4 py-2 font-semibold text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600 transition-colors text-sm">
+                <button className="w-full cursor-pointer px-4 py-2 font-semibold text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600 transition-colors text-sm">
                   Back to Dashboard
                 </button>
               </Link>
@@ -508,7 +508,7 @@ export default function LawyersPage() {
                 <button
                   key={spec}
                   onClick={() => handleFilterClick(spec)}
-                  className={`text-sm font-medium px-3 py-1.5 rounded-full border transition-all duration-200 ${
+                  className={`text-md cursor-pointer font-medium px-3 py-1.5 rounded-full border transition-all duration-200 ${
                     activeFilter === spec
                       ? "bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-500/20"
                       : "bg-white/5 border-gray-700 text-gray-300 hover:border-indigo-500/50 hover:text-white"
@@ -520,7 +520,7 @@ export default function LawyersPage() {
               {activeFilter && (
                 <button
                   onClick={() => setActiveFilter(null)}
-                  className="text-sm font-medium px-3 py-1.5 rounded-full border border-red-500/30 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all duration-200"
+                  className="text-md cursor-pointer font-medium px-3 py-1.5 rounded-full border border-red-500/30 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all duration-200"
                 >
                   Clear filter ×
                 </button>
