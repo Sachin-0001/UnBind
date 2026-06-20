@@ -2,6 +2,7 @@
 Contract analysis service – full port of analysisService.ts
 """
 
+from email.mime import text
 import json
 import asyncio
 import logging
@@ -227,6 +228,14 @@ async def validate_legal_document(
     Returns True if the text appears to be a legal document (contract, agreement, NDA, etc.).
     Defaults to True if parsing fails (fail open).
     """
+    MAX_START = 700
+    MAX_END = 300
+
+    sample = (
+        text[:MAX_START]
+        if len(text) <= MAX_START + MAX_END
+        else text[:MAX_START] + "\n\n...\n\n" + text[-MAX_END:]
+    )
     output = await chat_complete([
         {
             "role": "system",
@@ -239,7 +248,7 @@ async def validate_legal_document(
         },
         {
             "role": "user",
-            "content": f"Is this text a legal document?\n\n{text[:2000]}",
+            "content": f"Is this text a legal document?\n\n{sample}",
         },
     ], user_id=user_id)
     
