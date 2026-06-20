@@ -217,7 +217,7 @@ async def _create_chunk_summaries(
 
 
 # ───── Legal document validation ─────
-
+@traceable(name="validate_document")
 async def validate_legal_document(
     text: str,
     user_id: str | None = None,
