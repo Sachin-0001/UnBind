@@ -118,6 +118,9 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, analyses }) => {
       // Silently ignore for now; UI will still show old plan until next refresh
     }
   }
+  const handlePlandUpdate = () => {
+    router.push("/pricing");
+  }
 
   return (
     <div className="space-y-8 fade-in">
@@ -180,6 +183,12 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, analyses }) => {
                         onClick={handleCancel}
                       >
                         Cancel Plan
+                      </button>
+                      <button 
+                        className="inline-flex cursor-pointer items-center px-3 py-1 font-semibold text-white  border border-yellow-400 rounded-md  transition-colors text-xs shadow-lg" 
+                        onClick={handlePlandUpdate}
+                      >
+                        Update Plan
                       </button>
                     </div>
                   ) : (
