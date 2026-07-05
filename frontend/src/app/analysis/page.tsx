@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AnalysisDisplay from "@/components/AnalysisDisplay";
+import ErrorMessage from "@/components/ErrorMessage";
 import Header from "@/components/Header";
 import { LogoIcon } from "@/components/Icons";
 import { useAuth } from "@/context/AuthContext";
@@ -37,12 +38,20 @@ export default function AnalysisPage() {
     <div className="min-h-screen font-sans">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-10 max-w-7xl">
-        <AnalysisDisplay
-          analysisResult={analysis.analysisResult}
-          documentText={analysis.documentText}
-          onError={setError}
-          onBackToDashboard={() => router.push("/dashboard")}
-        />
+        {error ? (
+          <ErrorMessage
+            message={error}
+            onRetry={() => setError(null)}
+            retryLabel="Dismiss"
+          />
+        ) : (
+          <AnalysisDisplay
+            analysisResult={analysis.analysisResult}
+            documentText={analysis.documentText}
+            onError={setError}
+            onBackToDashboard={() => router.push("/dashboard")}
+          />
+        )}
       </main>
       <Footer/>
     </div>

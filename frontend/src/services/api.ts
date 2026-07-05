@@ -3,6 +3,36 @@ import type { User, StoredAnalysis, AnalysisResponse, LawyerProfile } from "@/ty
 const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL ?? ""}/api`;
 const ACCESS_TOKEN_KEY = "unbind_access_token";
 
+/**
+ * Typed error thrown for every non-2xx response. Carries the HTTP `status`
+ * and the parsed backend `detail` so callers can branch on the status code or
+ * a machine-readable code (e.g. "NOT_A_LEGAL_DOCUMENT") instead of matching on
+ * a free-text message.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly detail: string;
+
+  constructor(status: number, detail: string) {
+    super(detail);
+    this.name = "ApiError";
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
+/**
+ * Build an ApiError from a failed Response, parsing FastAPI's `detail` field
+ * (falling back to `error`/`message`) without throwing if the body isn't JSON.
+ */
+async function toApiError(res: Response): Promise<ApiError> {
+  const data = await res.json().catch(() => null);
+  const raw =
+    (data && (data.detail ?? data.error ?? data.message)) ?? `Request failed (${res.status})`;
+  const detail = typeof raw === "string" ? raw : JSON.stringify(raw);
+  return new ApiError(res.status, detail);
+}
+
 function getStoredAccessToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -43,11 +73,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     headers,
   });
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    const message =
-      (data && (data.detail || data.error || data.message)) ||
-      `Request failed: ${res.status}`;
-    throw new Error(message);
+    throw await toApiError(res);
   }
   return res.json() as Promise<T>;
 }
@@ -87,8 +113,10 @@ export const getCurrentUser = async (): Promise<User | null> => {
     // Re-hydrate the stored token on every page load
     if (user?.accessToken) storeAccessToken(user.accessToken);
     return user;
-  } catch (error: any) {
-    if (error?.message?.includes("401") || error?.message?.includes("Not authenticated")) {
+  } catch (error) {
+    // Only clear the stored token when the server actually rejected auth;
+    // a network/other error shouldn't log the user out locally.
+    if (error instanceof ApiError && error.status === 401) {
       storeAccessToken(null);
     }
     return null;
@@ -143,10 +171,7 @@ export const uploadAndAnalyze = async (
     ...requestInit,
   });
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(
-      data.detail || data.error || `Upload failed: ${res.status}`,
-    );
+    throw await toApiError(res);
   }
   return res.json() as Promise<StoredAnalysis>;
 };
@@ -182,15 +207,19 @@ export const getUserPlan = async (): Promise<{ plan: string | null; isPro: boole
   try {
     return await apiFetch<{ plan: string | null; isPro: boolean; aiModel: string; dailyCount: number; dailyLimit: number | null; limitReached: boolean }>("/user/plan/");
   } catch (error) {
-    // Return default values for unauthenticated users to maintain consistency
-    return {
-      plan: null,
-      isPro: false,
-      aiModel: "llama-3.3-70b-versatile",
-      dailyCount: 0,
-      dailyLimit: 1,
-      limitReached: false,
-    };
+    // Unauthenticated users get sensible free-tier defaults; any other
+    // failure is a real error and must not be silently swallowed.
+    if (error instanceof ApiError && error.status === 401) {
+      return {
+        plan: null,
+        isPro: false,
+        aiModel: "llama-3.3-70b-versatile",
+        dailyCount: 0,
+        dailyLimit: 1,
+        limitReached: false,
+      };
+    }
+    throw error;
   }
 };
 
