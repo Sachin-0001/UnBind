@@ -1,15 +1,17 @@
 from contextlib import asynccontextmanager
+
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
 
 from app.config import get_settings
-from app.database import connect_db, close_db
-from app.routes.auth_routes import router as auth_router
+from app.database import close_db, connect_db
 from app.routes.analysis_routes import router as analysis_router
-from app.routes.plan_routes import router as plan_router
-from app.routes.lawyer_routes import router as lawyer_router
+from app.routes.auth_routes import router as auth_router
 from app.routes.lawyer_registration_routes import router as lawyer_registration_router
+from app.routes.lawyer_routes import router as lawyer_router
+from app.routes.plan_routes import router as plan_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -29,14 +31,21 @@ app = FastAPI(
 
 settings = get_settings()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://localhost:3000"],
-    allow_origin_regex=r"https://.*\.vercel\.app",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Only this project's known origins are allowed by default: the configured
+# production frontend plus localhost for dev. The broad "*.vercel.app" match is
+# opt-in via VERCEL_PREVIEW_REGEX so anonymous Vercel apps can't hit the API.
+allowed_origins = list(dict.fromkeys([settings.FRONTEND_URL, "http://localhost:3000"]))
+
+cors_kwargs = {
+    "allow_origins": allowed_origins,
+    "allow_credentials": True,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+}
+if settings.VERCEL_PREVIEW_REGEX:
+    cors_kwargs["allow_origin_regex"] = settings.VERCEL_PREVIEW_REGEX
+
+app.add_middleware(CORSMiddleware, **cors_kwargs)
 
 app.include_router(auth_router, prefix="/api")
 app.include_router(analysis_router, prefix="/api")
@@ -51,5 +60,4 @@ async def health():
 
 
 if __name__ == "__main__":
-
     uvicorn.run("app.main:app", host="0.0.0.0", port=settings.PORT, reload=True)

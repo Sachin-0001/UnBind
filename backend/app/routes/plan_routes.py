@@ -1,30 +1,33 @@
 import json
 
+from bson import ObjectId
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
-from bson import ObjectId
+
 from app.auth import get_current_user_id
 from app.database import get_db
 from app.services.model_selector import select_model
 
 router = APIRouter(prefix="/user/plan", tags=["user_plan"])
 
+
 class PlanRequest(BaseModel):
     plan: str
+
 
 @router.post("/activate")
 async def activate_plan(request: Request):
     try:
         payload = await request.json()
-    except Exception:
-        raise HTTPException(status_code=422, detail="Invalid JSON body")
+    except Exception as e:
+        raise HTTPException(status_code=422, detail="Invalid JSON body") from e
 
     # Some clients/proxies can send a JSON string instead of an object.
     if isinstance(payload, str):
         try:
             payload = json.loads(payload)
-        except Exception:
-            raise HTTPException(status_code=422, detail="Invalid JSON body")
+        except Exception as e:
+            raise HTTPException(status_code=422, detail="Invalid JSON body") from e
 
     if not isinstance(payload, dict):
         raise HTTPException(status_code=422, detail="Invalid request body")
@@ -36,23 +39,19 @@ async def activate_plan(request: Request):
     user_id = await get_current_user_id(request)
     if plan not in ["Brief", "Motion", "Verdict"]:
         raise HTTPException(status_code=400, detail="Invalid plan")
-    
+
     db = get_db()
-    await db.users.update_one(
-        {"_id": ObjectId(user_id)},
-        {"$set": {"plan": plan, "pro": True}}
-    )
+    await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"plan": plan, "pro": True}})
     return {"success": True, "plan": plan}
+
 
 @router.post("/cancel")
 async def cancel_plan(request: Request):
     user_id = await get_current_user_id(request)
     db = get_db()
-    await db.users.update_one(
-        {"_id": ObjectId(user_id)},
-        {"$set": {"plan": None, "pro": False}}
-    )
+    await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"plan": None, "pro": False}})
     return {"success": True}
+
 
 @router.get("/")
 async def get_plan(request: Request):

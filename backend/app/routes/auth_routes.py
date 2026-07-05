@@ -1,19 +1,21 @@
+import datetime
+
+import httpx
 from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel
-from app.schemas import SignupRequest, LoginRequest, UserResponse, UpdatePasswordRequest
+
 from app.auth import (
-    hash_password,
-    verify_password,
-    create_access_token,
-    set_auth_cookie,
     clear_auth_cookie,
+    create_access_token,
     get_current_user_id,
+    hash_password,
+    set_auth_cookie,
+    verify_password,
 )
-from app.database import get_db
 from app.config import get_settings
+from app.database import get_db
+from app.schemas import LoginRequest, SignupRequest, UpdatePasswordRequest, UserResponse
 from app.services.model_selector import select_model
-import datetime
-import httpx
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -36,7 +38,7 @@ async def signup(body: SignupRequest, request: Request, response: Response):
         "email": body.email.lower(),
         "passwordHash": password_hash,
         "picture": None,
-        "createdAt": now
+        "createdAt": now,
     }
     result = await db.users.insert_one(doc)
     user_id = str(result.inserted_id)
@@ -77,7 +79,7 @@ async def login(body: LoginRequest, request: Request, response: Response):
         pro=user.get("pro", False),
         aiModel=select_model(user),
         accessToken=token,
-        createdAt=user.get("createdAt")
+        createdAt=user.get("createdAt"),
     )
 
 
@@ -96,7 +98,7 @@ async def me(request: Request):
     user = await db.users.find_one({"_id": ObjectId(user_id)})
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    
+
     token = create_access_token(user_id)
     return UserResponse(
         id=str(user["_id"]),
@@ -107,7 +109,7 @@ async def me(request: Request):
         plan=user.get("plan"),
         aiModel=select_model(user),
         createdAt=user.get("createdAt"),
-        accessToken=token
+        accessToken=token,
     )
 
 
@@ -132,8 +134,7 @@ async def update_password(body: UpdatePasswordRequest, request: Request):
     # Hash and update password
     new_password_hash = hash_password(body.newPassword)
     await db.users.update_one(
-        {"_id": ObjectId(user_id)},
-        {"$set": {"passwordHash": new_password_hash}}
+        {"_id": ObjectId(user_id)}, {"$set": {"passwordHash": new_password_hash}}
     )
 
     return {"ok": True, "message": "Password updated successfully"}

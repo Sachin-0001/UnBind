@@ -1,16 +1,17 @@
 import asyncio
 import logging
 import re
-from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage, SystemMessage
-from langsmith import traceable
+from typing import Any
+
+from bson import ObjectId
 from groq import RateLimitError
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_groq import ChatGroq
+from langsmith import traceable
+
 from app.config import get_settings
 from app.database import get_db
-from typing import Any
-from bson import ObjectId
 from app.services.model_selector import FREE_MODEL, select_model
-
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ def _get_api_key() -> str:
         raise RuntimeError("GROQ_API_KEY is not set")
     return key
 
+
 async def get_user_by_id(user_id: str) -> dict[str, Any] | None:
     db = get_db()
     try:
@@ -74,7 +76,7 @@ async def chat_complete(
         temperature=temperature,
         api_key=api_key,
     )
-    
+
     # Convert dict messages to LangChain message objects
     lc_messages = []
     for msg in messages:
@@ -94,10 +96,12 @@ async def chat_complete(
                 if attempt == _MAX_RETRIES - 1:
                     raise
                 # Honor the server's suggested wait; otherwise exponential backoff.
-                wait = _retry_after_seconds(err) or min(2 ** attempt, 30)
+                wait = _retry_after_seconds(err) or min(2**attempt, 30)
                 wait += 0.5  # small cushion so we're clear of the window
                 logger.warning(
                     "Groq rate limited (attempt %d/%d); retrying in %.1fs",
-                    attempt + 1, _MAX_RETRIES, wait,
+                    attempt + 1,
+                    _MAX_RETRIES,
+                    wait,
                 )
                 await asyncio.sleep(wait)

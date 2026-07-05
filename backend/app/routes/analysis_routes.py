@@ -2,20 +2,21 @@ import io
 from datetime import datetime, timezone
 
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from langsmith.run_helpers import tracing_context
-from app.schemas import AnalyzeRequest, SimulateRequest, StoredAnalysis
+
 from app.auth import get_current_user_id
 from app.database import get_db
+from app.schemas import AnalyzeRequest, SimulateRequest
 from app.services.analysis_service import analyze_contract, simulate_impact
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
 # Daily analysis limits per plan (None = unlimited)
 PLAN_LIMITS: dict[str | None, int | None] = {
-    None: 1,        # free tier: 1 analysis per day
-    "Brief": 3,     # Brief plan: 3 analyses per day
-    "Motion": 5,    # Motion plan: 5 analyses per day
+    None: 1,  # free tier: 1 analysis per day
+    "Brief": 3,  # Brief plan: 3 analyses per day
+    "Motion": 5,  # Motion plan: 5 analyses per day
     "Verdict": None,  # Verdict plan: unlimited
 }
 
@@ -82,10 +83,10 @@ async def analyze(body: AnalyzeRequest, request: Request):
             result = await analyze_contract(body.text, body.role, user_id=user_id)
     except ValueError as e:
         if str(e) == "NOT_A_LEGAL_DOCUMENT":
-            raise HTTPException(status_code=422, detail="NOT_A_LEGAL_DOCUMENT")
+            raise HTTPException(status_code=422, detail="NOT_A_LEGAL_DOCUMENT") from e
         raise
     except RuntimeError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e)) from e
 
     # Persist to DB
     db = get_db()
@@ -148,10 +149,10 @@ async def upload_and_analyze(
             result = await analyze_contract(text, role, user_id=user_id)
     except ValueError as e:
         if str(e) == "NOT_A_LEGAL_DOCUMENT":
-            raise HTTPException(status_code=422, detail="NOT_A_LEGAL_DOCUMENT")
+            raise HTTPException(status_code=422, detail="NOT_A_LEGAL_DOCUMENT") from e
         raise
     except RuntimeError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e)) from e
 
     # Persist
     db = get_db()
@@ -248,6 +249,7 @@ async def simulate(body: SimulateRequest, request: Request):
 
 # ──── PDF text extraction helper ────
 
+
 def _extract_pdf_text(pdf_bytes: bytes) -> str:
     try:
         import pdfplumber
@@ -270,4 +272,4 @@ def _extract_pdf_text(pdf_bytes: bytes) -> str:
                 pages.append(text)
             return "\n\n".join(pages)
         except Exception as e:
-            raise HTTPException(status_code=422, detail=f"Failed to extract PDF text: {e}")
+            raise HTTPException(status_code=422, detail=f"Failed to extract PDF text: {e}") from e

@@ -1,6 +1,6 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, EmailStr
 
 
 # ---------- Auth ----------
@@ -19,12 +19,12 @@ class UserResponse(BaseModel):
     id: str
     username: str
     email: str
-    picture: Optional[str] = None
+    picture: str | None = None
     pro: bool = False
-    plan: Optional[str] = None
-    aiModel: Optional[str] = None
-    accessToken: Optional[str] = None
-    createdAt: Optional[datetime] = None
+    plan: str | None = None
+    aiModel: str | None = None
+    accessToken: str | None = None
+    createdAt: datetime | None = None
 
 
 class UpdatePasswordRequest(BaseModel):
@@ -36,10 +36,10 @@ class UpdatePasswordRequest(BaseModel):
 class ClauseAnalysis(BaseModel):
     clauseText: str
     simplifiedExplanation: str
-    riskLevel: str 
+    riskLevel: str
     riskReason: str
     negotiationSuggestion: str
-    suggestedRewrite: Optional[str] = None
+    suggestedRewrite: str | None = None
 
 
 class KeyTerm(BaseModel):
@@ -68,7 +68,7 @@ class AnalysisResponse(BaseModel):
     keyTerms: list[KeyTerm]
     keyDates: list[KeyDate]
     missingClauses: list[MissingClause]
-    chunkSummaries: Optional[list[ChunkSummary]] = None
+    chunkSummaries: list[ChunkSummary] | None = None
 
 
 class StoredAnalysis(BaseModel):
@@ -100,8 +100,8 @@ class LawyerProfile(BaseModel):
     experienceYears: int
     city: str
     email: str
-    phone: Optional[str] = None
-    rating: Optional[float] = 0.0
+    phone: str | None = None
+    rating: float | None = 0.0
     verified: bool = False
     createdAt: datetime
 
@@ -119,4 +119,4 @@ class LawyerRegistrationRequest(BaseModel):
     bio: str
     experienceYears: int
     city: str
-    phone: Optional[str] = None
+    phone: str | None = None

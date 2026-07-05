@@ -23,7 +23,11 @@ def _is_likely_heading(text: str) -> bool:
         or re.match(r"^[IVX]+\.?\s", first_line)
         or re.match(r"^[A-Z]\.?\s", first_line)
         or (first_line == first_line.upper() and 3 < len(first_line) < 100)
-        or re.match(r"^(section|chapter|part|article|clause|schedule|appendix|exhibit)\s+\d+", first_line, re.I)
+        or re.match(
+            r"^(section|chapter|part|article|clause|schedule|appendix|exhibit)\s+\d+",
+            first_line,
+            re.I,
+        )
         or (len(first_line) < 80 and first_line.endswith(":"))
         or (len(first_line) < 60 and len(lines) == 1)
     )
@@ -42,6 +46,7 @@ def _get_heading_level(heading: str) -> int:
 
 
 # ─────────── Public API ───────────
+
 
 def chunk_text(text: str, chunk_size: int = 4000, overlap: int = 300) -> list[str]:
     """Semantic-aware text chunking using LangChain with optimized separators."""

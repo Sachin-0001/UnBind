@@ -1,6 +1,6 @@
 import asyncio
-import smtplib
 import logging
+import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -19,7 +19,10 @@ def _send_smtp(
     settings = get_settings()
 
     if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        print("[SMTP WARNING] SMTP credentials not configured (SMTP_USER or SMTP_PASSWORD is empty) — email not sent.", flush=True)
+        print(
+            "[SMTP WARNING] SMTP credentials not configured (SMTP_USER or SMTP_PASSWORD is empty) — email not sent.",
+            flush=True,
+        )
         raise ValueError("SMTP credentials not configured on the server")
 
     msg = MIMEMultipart("alternative")
@@ -57,6 +60,7 @@ async def send_email(
 
 
 # ── Pre-built template helpers ────────────────────────────────────────────────
+
 
 async def send_lawyer_contact_email(
     lawyer_email: str,

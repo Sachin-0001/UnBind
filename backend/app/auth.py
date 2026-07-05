@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta, timezone
+
+from fastapi import HTTPException, Request, Response
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import HTTPException, Request, Response
+
 from app.config import get_settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -26,13 +28,13 @@ def decode_access_token(token: str) -> dict:
     settings = get_settings()
     try:
         return jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+    except JWTError as e:
+        raise HTTPException(status_code=401, detail="Not authenticated") from e
 
 
 def _is_local_dev(request: Request | None = None) -> bool:
     """Check if we are running in local development mode.
-    
+
     When a *request* is available we also inspect the ``X-Forwarded-Proto``
     header that reverse-proxies such as Vercel inject.  If the original
     request was over HTTPS we know we are **not** in local dev even when
@@ -43,7 +45,9 @@ def _is_local_dev(request: Request | None = None) -> bool:
         if "https" in proto:
             return False
     settings = get_settings()
-    return settings.FRONTEND_URL.startswith("http://localhost") or settings.FRONTEND_URL.startswith("http://127.0.0.1")
+    return settings.FRONTEND_URL.startswith("http://localhost") or settings.FRONTEND_URL.startswith(
+        "http://127.0.0.1"
+    )
 
 
 def set_auth_cookie(response: Response, token: str, request: Request | None = None) -> None:

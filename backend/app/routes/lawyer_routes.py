@@ -1,20 +1,20 @@
-import asyncio
 from datetime import datetime
-from typing import Optional
+
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException, Request, Query
+from fastapi import APIRouter, HTTPException, Query, Request
+
 from app.auth import get_current_user_id
 from app.database import get_db
-from app.schemas import LawyerProfile, ContactLawyerRequest
+from app.schemas import ContactLawyerRequest, LawyerProfile
 from app.services.email_service import send_lawyer_contact_email
 
 router = APIRouter(prefix="/lawyers", tags=["lawyers"])
 
 # Daily analysis limits per plan (None = unlimited)
 PLAN_LIMITS: dict[str | None, int | None] = {
-    None: 1,        # free tier: 1 analysis per day
-    "Brief": 3,     # Brief plan: 3 analyses per day
-    "Motion": 5,    # Motion plan: 5 analyses per day
+    None: 1,  # free tier: 1 analysis per day
+    "Brief": 3,  # Brief plan: 3 analyses per day
+    "Motion": 5,  # Motion plan: 5 analyses per day
     "Verdict": None,  # Verdict plan: unlimited
 }
 
@@ -47,7 +47,7 @@ async def _require_verdict_plan(user_id: str) -> None:
 @router.get("/", response_model=list[LawyerProfile])
 async def list_lawyers(
     request: Request,
-    specialization: Optional[str] = Query(None, description="Filter lawyers by specialization")
+    specialization: str | None = Query(None, description="Filter lawyers by specialization"),
 ):
     """List all lawyers, optionally filtered by specialization."""
     user_id = await get_current_user_id(request)
@@ -76,7 +76,7 @@ async def list_lawyers(
                 phone=lawyer_doc.get("phone"),
                 rating=lawyer_doc.get("rating", 0.0),
                 verified=lawyer_doc.get("verified", False),
-                createdAt=lawyer_doc["createdAt"]
+                createdAt=lawyer_doc["createdAt"],
             )
         )
 
@@ -94,8 +94,8 @@ async def get_lawyer(lawyer_id: str, request: Request):
     # Validate ObjectId
     try:
         object_id = ObjectId(lawyer_id)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid lawyer ID")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid lawyer ID") from e
 
     # Fetch lawyer
     lawyer_doc = await db.lawyers.find_one({"_id": object_id})
@@ -113,7 +113,7 @@ async def get_lawyer(lawyer_id: str, request: Request):
         phone=lawyer_doc.get("phone"),
         rating=lawyer_doc.get("rating", 0.0),
         verified=lawyer_doc.get("verified", False),
-        createdAt=lawyer_doc["createdAt"]
+        createdAt=lawyer_doc["createdAt"],
     )
 
 
@@ -128,8 +128,8 @@ async def contact_lawyer(lawyer_id: str, request: ContactLawyerRequest, http_req
     # Validate ObjectId
     try:
         object_id = ObjectId(lawyer_id)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid lawyer ID")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid lawyer ID") from e
 
     # Check if lawyer exists
     lawyer_doc = await db.lawyers.find_one({"_id": object_id})
@@ -143,7 +143,7 @@ async def contact_lawyer(lawyer_id: str, request: ContactLawyerRequest, http_req
         "message": request.message,
         "contactEmail": request.contactEmail,
         "createdAt": datetime.utcnow(),
-        "status": "pending"
+        "status": "pending",
     }
     result = await db.lawyer_contact_requests.insert_one(contact_request_doc)
 

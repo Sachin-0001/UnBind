@@ -1,10 +1,12 @@
 from datetime import datetime
-from typing import Optional
+
 from fastapi import APIRouter, HTTPException
+
 from app.database import get_db
 from app.schemas import LawyerRegistrationRequest
 
 router = APIRouter(prefix="/lawyer-register", tags=["lawyer_registration"])
+
 
 @router.post("/", response_model=dict)
 async def register_lawyer(payload: LawyerRegistrationRequest):
@@ -14,7 +16,9 @@ async def register_lawyer(payload: LawyerRegistrationRequest):
     # Check if lawyer with this email already exists
     existing_lawyer = await db.lawyers.find_one({"email": payload.email})
     if existing_lawyer:
-        raise HTTPException(status_code=400, detail="A lawyer with this email is already registered")
+        raise HTTPException(
+            status_code=400, detail="A lawyer with this email is already registered"
+        )
 
     # Create lawyer document
     lawyer_doc = {
@@ -27,7 +31,7 @@ async def register_lawyer(payload: LawyerRegistrationRequest):
         "phone": payload.phone,
         "rating": 0.0,
         "verified": False,  # Lawyers need to be verified by admin
-        "createdAt": datetime.utcnow()
+        "createdAt": datetime.utcnow(),
     }
 
     # Insert lawyer into database
@@ -37,5 +41,5 @@ async def register_lawyer(payload: LawyerRegistrationRequest):
     return {
         "success": True,
         "message": "Lawyer registration submitted successfully. Our team will review your application.",
-        "lawyerId": str(result.inserted_id)
+        "lawyerId": str(result.inserted_id),
     }

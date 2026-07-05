@@ -1,20 +1,22 @@
-from email.mime import text
-import json
 import asyncio
+import json
 import logging
 import re
+from collections.abc import Callable
 from functools import lru_cache
-from typing import Callable, Optional, Any
-from langsmith import traceable
+from typing import Any
+
 from langchain_core.embeddings import Embeddings
+from langsmith import traceable
+
 from app.services.groq_service import chat_complete
 from app.services.pdf_processing import chunk_text, convert_pdf_to_markdown
-
 
 logger = logging.getLogger(__name__)
 
 
 # ───── Helpers ─────
+
 
 def _strip_code_fence(text: str) -> str:
     """Remove optional markdown code fences while preserving JSON content."""
@@ -87,39 +89,45 @@ def _try_parse_json(text: str) -> Any | None:
 
 # ───── Chunk analysis ─────
 
+
 @traceable(name="analyze_chunk")
 async def _analyze_chunk(
     chunk: str,
     role: str,
     user_id: str | None = None,
 ) -> tuple[list[dict], bool]:
-    role_instruction = f"The user's role is: {role}. Analyze ALL content in this chunk from their perspective."
-    output = await chat_complete([
-        {
-            "role": "system",
-            "content": (
-                "You help people with below-average literacy. You MUST analyze EVERY piece of content in the text chunk.\n"
-                "IMPORTANT: Do not skip any content. Every section, paragraph, or clause must be analyzed and included in your response.\n\n"
-                "For each piece of content:\n"
-                "- If it's a standard/neutral clause with NO risk at all, set riskLevel to 'No Risk' and provide only a summary explanation\n"
-                "- If it's a standard clause with minimal risk, set riskLevel to 'Negligible' and provide full explanation\n"
-                "- If there's potential harm or imbalance, assign Low/Medium/High risk levels\n"
-                "- Use simple words at about a 6th-grade level. Keep explanations clear and helpful\n\n"
-                "Required fields for each clause:\n"
-                "- clauseText: The actual text being analyzed\n"
-                "- simplifiedExplanation: 1–2 sentences explaining what this means in plain language\n"
-                "- riskLevel: One of [Low, Medium, High, Negligible, No Risk]\n"
-                "- riskReason: For No Risk, just say 'No risk identified'. For other risks, explain what could go wrong.\n"
-                "- negotiationSuggestion: For No Risk, say 'No changes needed'. For other risks, suggest improvements.\n"
-                "- suggestedRewrite: For No Risk, say 'No changes needed'. For other risks, provide a safer version.\n\n"
-                "Return JSON only with a clauses array. Make sure to cover ALL content in the chunk, not just risky parts."
-            ),
-        },
-        {
-            "role": "user",
-            "content": f"{role_instruction}\n\nTEXT CHUNK TO ANALYZE:\n{chunk}\n\nAnalyze EVERY part of this text and return JSON with all clauses found.",
-        },
-    ], user_id=user_id)
+    role_instruction = (
+        f"The user's role is: {role}. Analyze ALL content in this chunk from their perspective."
+    )
+    output = await chat_complete(
+        [
+            {
+                "role": "system",
+                "content": (
+                    "You help people with below-average literacy. You MUST analyze EVERY piece of content in the text chunk.\n"
+                    "IMPORTANT: Do not skip any content. Every section, paragraph, or clause must be analyzed and included in your response.\n\n"
+                    "For each piece of content:\n"
+                    "- If it's a standard/neutral clause with NO risk at all, set riskLevel to 'No Risk' and provide only a summary explanation\n"
+                    "- If it's a standard clause with minimal risk, set riskLevel to 'Negligible' and provide full explanation\n"
+                    "- If there's potential harm or imbalance, assign Low/Medium/High risk levels\n"
+                    "- Use simple words at about a 6th-grade level. Keep explanations clear and helpful\n\n"
+                    "Required fields for each clause:\n"
+                    "- clauseText: The actual text being analyzed\n"
+                    "- simplifiedExplanation: 1–2 sentences explaining what this means in plain language\n"
+                    "- riskLevel: One of [Low, Medium, High, Negligible, No Risk]\n"
+                    "- riskReason: For No Risk, just say 'No risk identified'. For other risks, explain what could go wrong.\n"
+                    "- negotiationSuggestion: For No Risk, say 'No changes needed'. For other risks, suggest improvements.\n"
+                    "- suggestedRewrite: For No Risk, say 'No changes needed'. For other risks, provide a safer version.\n\n"
+                    "Return JSON only with a clauses array. Make sure to cover ALL content in the chunk, not just risky parts."
+                ),
+            },
+            {
+                "role": "user",
+                "content": f"{role_instruction}\n\nTEXT CHUNK TO ANALYZE:\n{chunk}\n\nAnalyze EVERY part of this text and return JSON with all clauses found.",
+            },
+        ],
+        user_id=user_id,
+    )
     parsed = _try_parse_json(output)
     if parsed and isinstance(parsed, dict):
         clauses = parsed.get("clauses", [])
@@ -132,6 +140,7 @@ async def _analyze_chunk(
 
 # ───── Report synthesis ─────
 
+
 @traceable(name="synthesize_report")
 async def _synthesize_report(
     clauses: list[dict],
@@ -140,31 +149,34 @@ async def _synthesize_report(
 ) -> dict:
     role_instruction = f"The user's role is: {role}. Generate a comprehensive summary and extract all relevant information from their perspective."
     clause_context = "\n".join(
-        f'Clause {i+1}:\n- Text: "{c.get("clauseText", "")}"\n- Explanation: "{c.get("simplifiedExplanation", "")}"\n- Risk: {c.get("riskLevel", "")}\n- Risk Reason: "{c.get("riskReason", "")}"\n'
+        f'Clause {i + 1}:\n- Text: "{c.get("clauseText", "")}"\n- Explanation: "{c.get("simplifiedExplanation", "")}"\n- Risk: {c.get("riskLevel", "")}\n- Risk Reason: "{c.get("riskReason", "")}"\n'
         for i, c in enumerate(clauses)
     )
-    output = await chat_complete([
-        {
-            "role": "system",
-            "content": (
-                "You help laypeople. Use simple, short sentences. Avoid jargon.\n"
-                "IMPORTANT: This document has been fully analyzed. Include information about ALL clauses, not just risky ones.\n\n"
-                "Required fields:\n"
-                "- summary: 4-6 short sentences covering the overall document\n"
-                "- keyTerms: Extract important legal/business terms with simple definitions (1 sentence each)\n"
-                "- keyDates: Extract all dates, deadlines, and time periods with descriptions\n"
-                "- missingClauses: Suggest important clauses that might be missing\n"
-                "- chunkSummaries: For each chunk of content, provide a brief summary\n\n"
-                "Return JSON only with: summary (string), keyTerms (array of {term, definition}), "
-                "keyDates (array of {date, description}), missingClauses (array of {clauseName, reason}), "
-                "chunkSummaries (array of {chunkIndex, summary})."
-            ),
-        },
-        {
-            "role": "user",
-            "content": f"{role_instruction}\n\nCOMPLETE ANALYSIS ({len(clauses)} clauses analyzed):\n{clause_context}\n\nGenerate comprehensive summary covering ALL analyzed content.",
-        },
-    ], user_id=user_id)
+    output = await chat_complete(
+        [
+            {
+                "role": "system",
+                "content": (
+                    "You help laypeople. Use simple, short sentences. Avoid jargon.\n"
+                    "IMPORTANT: This document has been fully analyzed. Include information about ALL clauses, not just risky ones.\n\n"
+                    "Required fields:\n"
+                    "- summary: 4-6 short sentences covering the overall document\n"
+                    "- keyTerms: Extract important legal/business terms with simple definitions (1 sentence each)\n"
+                    "- keyDates: Extract all dates, deadlines, and time periods with descriptions\n"
+                    "- missingClauses: Suggest important clauses that might be missing\n"
+                    "- chunkSummaries: For each chunk of content, provide a brief summary\n\n"
+                    "Return JSON only with: summary (string), keyTerms (array of {term, definition}), "
+                    "keyDates (array of {date, description}), missingClauses (array of {clauseName, reason}), "
+                    "chunkSummaries (array of {chunkIndex, summary})."
+                ),
+            },
+            {
+                "role": "user",
+                "content": f"{role_instruction}\n\nCOMPLETE ANALYSIS ({len(clauses)} clauses analyzed):\n{clause_context}\n\nGenerate comprehensive summary covering ALL analyzed content.",
+            },
+        ],
+        user_id=user_id,
+    )
     parsed = _try_parse_json(output)
     if not parsed:
         raise RuntimeError("Failed to parse synthesis JSON")
@@ -175,6 +187,7 @@ async def _synthesize_report(
 
 # ───── Chunk summaries ─────
 
+
 @traceable(name="create_chunk_summaries")
 async def _create_chunk_summaries(
     chunks: list[str],
@@ -183,34 +196,41 @@ async def _create_chunk_summaries(
     user_id: str | None = None,
 ) -> list[dict]:
     summaries: list[dict] = []
-    per_chunk = len(clauses) // len(chunks) + (1 if len(clauses) % len(chunks) else 0) if chunks else len(clauses)
+    per_chunk = (
+        len(clauses) // len(chunks) + (1 if len(clauses) % len(chunks) else 0)
+        if chunks
+        else len(clauses)
+    )
     for i, chunk in enumerate(chunks):
         start = i * per_chunk
         end = min(start + per_chunk, len(clauses))
         chunk_clauses = clauses[start:end]
         clause_ctx = "\n".join(
-            f'- {c.get("clauseText", "")[:100]}... (Risk: {c.get("riskLevel", "")})'
+            f"- {c.get('clauseText', '')[:100]}... (Risk: {c.get('riskLevel', '')})"
             for c in chunk_clauses
         )
-        output = await chat_complete([
-            {
-                "role": "system",
-                "content": (
-                    "You help laypeople. Create a simple 1-2 sentence summary of what this chunk covers.\n"
-                    "Focus on the main topics, not individual clauses. Use plain language.\n"
-                    "Return only the summary text, no JSON or formatting."
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"The user's role is: {role}. Summarize what this chunk covers.\n\n"
-                    f"CHUNK {i+1} CONTENT:\n{chunk[:500]}...\n\n"
-                    f"CLAUSES IN THIS CHUNK:\n{clause_ctx}\n\n"
-                    "Provide a simple summary of what this chunk covers."
-                ),
-            },
-        ], user_id=user_id)
+        output = await chat_complete(
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You help laypeople. Create a simple 1-2 sentence summary of what this chunk covers.\n"
+                        "Focus on the main topics, not individual clauses. Use plain language.\n"
+                        "Return only the summary text, no JSON or formatting."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"The user's role is: {role}. Summarize what this chunk covers.\n\n"
+                        f"CHUNK {i + 1} CONTENT:\n{chunk[:500]}...\n\n"
+                        f"CLAUSES IN THIS CHUNK:\n{clause_ctx}\n\n"
+                        "Provide a simple summary of what this chunk covers."
+                    ),
+                },
+            ],
+            user_id=user_id,
+        )
         summaries.append({"chunkIndex": i + 1, "summary": output.strip()})
     return summaries
 
@@ -222,7 +242,7 @@ async def validate_legal_document(
     user_id: str | None = None,
 ) -> bool:
     """Validate if the provided text is a legal document.
-    
+
     Returns True if the text appears to be a legal document (contract, agreement, NDA, etc.).
     Defaults to True if parsing fails (fail open).
     """
@@ -234,38 +254,42 @@ async def validate_legal_document(
         if len(text) <= MAX_START + MAX_END
         else text[:MAX_START] + "\n\n...\n\n" + text[-MAX_END:]
     )
-    output = await chat_complete([
-        {
-            "role": "system",
-            "content": (
-                "You are a legal document classifier. Determine if the provided text is a legal document "
-                "such as a contract, agreement, NDA, terms of service, lease, employment agreement, or similar legal document.\n\n"
-                "Respond ONLY with a JSON object: {\"isLegal\": true} or {\"isLegal\": false}. "
-                "Nothing else."
-            ),
-        },
-        {
-            "role": "user",
-            "content": f"Is this text a legal document?\n\n{sample}",
-        },
-    ], user_id=user_id)
-    
+    output = await chat_complete(
+        [
+            {
+                "role": "system",
+                "content": (
+                    "You are a legal document classifier. Determine if the provided text is a legal document "
+                    "such as a contract, agreement, NDA, terms of service, lease, employment agreement, or similar legal document.\n\n"
+                    'Respond ONLY with a JSON object: {"isLegal": true} or {"isLegal": false}. '
+                    "Nothing else."
+                ),
+            },
+            {
+                "role": "user",
+                "content": f"Is this text a legal document?\n\n{sample}",
+            },
+        ],
+        user_id=user_id,
+    )
+
     parsed = _try_parse_json(output)
     if parsed and isinstance(parsed, dict):
         return parsed.get("isLegal", True)
-    
+
     # Fail open: if parsing fails, default to True (don't block valid documents)
     return True
 
 
 # ───── Public: analyse contract ─────
 
+
 @traceable(name="analyze_contract_pipeline")
 async def analyze_contract(
     document_text: str,
     role: str,
     user_id: str | None = None,
-    on_progress: Optional[Callable[[str], None]] = None,
+    on_progress: Callable[[str], None] | None = None,
 ) -> dict:
     """Full contract analysis pipeline"""
 
@@ -349,9 +373,7 @@ class _HFInferenceEmbeddings(Embeddings):
         from huggingface_hub import InferenceClient
 
         self._model = model
-        self._client = InferenceClient(
-            model=model, token=token, provider="hf-inference"
-        )
+        self._client = InferenceClient(model=model, token=token, provider="hf-inference")
 
     def _embed_one(self, text: str) -> list[float]:
         import numpy as np
@@ -392,17 +414,15 @@ def _run_vector_search(chunks: list[str], scenario: str, k: int) -> list[str]:
     Synchronous and CPU-bound (model inference), so call it via
     ``asyncio.to_thread`` from async code to avoid blocking the event loop.
     """
-    from langchain_community.vectorstores import Chroma
-    from langchain.schema import Document
     import chromadb
     from chromadb.config import Settings as ChromaSettings
+    from langchain.schema import Document
+    from langchain_community.vectorstores import Chroma
 
     documents = [Document(page_content=chunk) for chunk in chunks]
     # Disable Chroma's anonymized telemetry — it otherwise spams noisy
     # "Failed to send telemetry event" logs on every request.
-    chroma_client = chromadb.EphemeralClient(
-        settings=ChromaSettings(anonymized_telemetry=False)
-    )
+    chroma_client = chromadb.EphemeralClient(settings=ChromaSettings(anonymized_telemetry=False))
     vectorstore = Chroma.from_documents(
         documents=documents,
         embedding=_get_embeddings(),
@@ -442,16 +462,14 @@ async def simulate_impact(
         # Never ask for more neighbours than we have chunks (avoids edge errors
         # on short docs), but cap at 6 to keep the LLM context focused.
         k = min(6, len(chunks))
-        relevant_chunks = await asyncio.to_thread(
-            _run_vector_search, chunks, scenario, k
-        )
+        relevant_chunks = await asyncio.to_thread(_run_vector_search, chunks, scenario, k)
 
         if not relevant_chunks:
             return (
                 "Could not find any information in the document relevant to your scenario. "
                 "Please try rephrasing your question or check if the topic is covered in the contract."
             )
-        
+
         context = "\n\n---\n\n".join(relevant_chunks)
         output = await chat_complete(
             [
@@ -459,7 +477,7 @@ async def simulate_impact(
                     "role": "system",
                     "content": (
                         "You help people with below-average literacy. Answer simply in plain words. "
-                        'Use up to 5 bullet points, each 1–2 short sentences, no jargon. '
+                        "Use up to 5 bullet points, each 1–2 short sentences, no jargon. "
                         'If helpful, include 1 tiny example starting with "Example:".'
                     ),
                 },
@@ -475,16 +493,18 @@ async def simulate_impact(
             temperature=0.2,
         )
         return output
-        
+
     except Exception as e:
-        logger.warning("simulate_impact vector search failed, falling back to keyword matching: %s", e)
+        logger.warning(
+            "simulate_impact vector search failed, falling back to keyword matching: %s", e
+        )
         # Fallback to simple keyword matching if vector search fails
         scenario_lower = scenario.lower()
         relevant = [c for c in chunks if any(word in c.lower() for word in scenario_lower.split())]
-        
+
         if not relevant:
             relevant = chunks[:6]  # Take first 6 chunks as fallback
-        
+
         context = "\n\n---\n\n".join(relevant[:6])
         output = await chat_complete(
             [
@@ -492,7 +512,7 @@ async def simulate_impact(
                     "role": "system",
                     "content": (
                         "You help people with below-average literacy. Answer simply in plain words. "
-                        'Use up to 5 bullet points, each 1–2 short sentences, no jargon. '
+                        "Use up to 5 bullet points, each 1–2 short sentences, no jargon. "
                         'If helpful, include 1 tiny example starting with "Example:".'
                     ),
                 },

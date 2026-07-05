@@ -1,0 +1,22 @@
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = [".venv", "venv"]
+
+[tool.ruff.lint]
+# pycodestyle errors/warnings, pyflakes, isort, pyupgrade, flake8-bugbear
+select = ["E", "F", "I", "UP", "B"]
+ignore = [
+    "B008",  # FastAPI relies on function-call defaults (File(...), Form(...))
+    # `ruff format` owns line length for code; the remaining E501 hits are all
+    # long prompt/HTML string literals that can't be wrapped without changing
+    # their content, so we don't enforce E501 on top of the formatter.
+    "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B018"]  # "useless expression" — intentional in assertions
