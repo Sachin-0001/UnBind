@@ -167,6 +167,10 @@ unbind contract.pdf
 | `JWT_SECRET`   | `python -c "import secrets; print(secrets.token_hex(32))"`                            | Self-generated |
 | `GOOGLE_CLIENT_ID` | [Google Cloud Console](https://console.cloud.google.com/) → Create → OAuth 2.0 Client ID | Free           |
 | `GOOGLE_CLIENT_SECRET` | [Google Cloud Console](https://console.cloud.google.com/) → Create → OAuth 2.0 Client ID | Free           |
+| `HUGGINGFACEHUB_API_TOKEN` | [HuggingFace](https://huggingface.co/settings/tokens) → New token (read scope) — used for embeddings | Free |
+| `SMTP_USER` / `SMTP_PASSWORD` | Gmail address + [App Password](https://support.google.com/accounts/answer/185833) — required for lawyer-contact emails | Free |
+
+> **Optional settings** (sane defaults, override only if needed): `PORT`, `FRONTEND_URL`, `LANGSMITH_*` (tracing), `SMTP_HOST` / `SMTP_PORT` / `EMAIL_FROM_NAME`, `JWT_ALGORITHM` / `JWT_EXPIRE_DAYS` / `COOKIE_NAME`, and `VERCEL_PREVIEW_REGEX` (opt-in CORS for Vercel preview URLs). See [`backend/.env.example`](backend/.env.example) for the full list.
 
 ---
 
