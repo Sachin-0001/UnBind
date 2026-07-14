@@ -252,8 +252,10 @@ const LandingPage: React.FC = () => {
           </div>
 
           {/* Product UI mockup — the protagonist, rendered from live components */}
-          <div className="rise-in float-slow mt-14 sm:mt-16" style={{ ["--i" as string]: 4 }}>
-            <HeroProductMockup />
+          <div className="rise-in mt-14 sm:mt-16" style={{ ["--i" as string]: 4 }}>
+            <div className="float-slow">
+              <HeroProductMockup />
+            </div>
           </div>
         </div>
       </section>
