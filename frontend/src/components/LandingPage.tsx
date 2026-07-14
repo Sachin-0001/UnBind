@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   LogoIcon,
@@ -11,8 +11,15 @@ import {
   CalendarIcon,
   AlertTriangleIcon,
 } from "./Icons";
-import ScreenshotFrame from "./ScreenshotFrame";
 import HeroProductMockup from "./HeroProductMockup";
+import {
+  UploadMockup,
+  ClauseMockup,
+  NegotiationMockup,
+  ExportMockup,
+  DashboardMockup,
+} from "./mockups/FeatureMockups";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { registerLawyer } from "@/services/api";
 
 const TerminalIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -61,6 +68,11 @@ const LandingPage: React.FC = () => {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'users' | 'lawyers'>('users');
+
+  // Drive scroll-triggered entrance animations. Re-scan when the tab switches
+  // so newly-mounted `.reveal` nodes get observed.
+  const rootRef = useRef<HTMLDivElement>(null);
+  useScrollReveal(rootRef, [activeTab]);
 
   // ── Lawyer registration form state ───────────────────────────────────────
   const [lawyerForm, setLawyerForm] = useState({
@@ -131,7 +143,7 @@ const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full fade-in">
+    <div ref={rootRef} className="w-full fade-in">
 
       {/* Tab Switcher */}
       <div className="flex justify-center pt-8 pb-2 px-4">
@@ -170,16 +182,23 @@ const LandingPage: React.FC = () => {
           boxShadow: "0 0 0 1px var(--ln-hairline)",
         }}
       >
+        {/* Ambient lavender halo behind the headline */}
+        <div
+          aria-hidden="true"
+          className="glow-pulse pointer-events-none absolute left-1/2 top-24 h-72 w-[42rem] max-w-[90vw] -translate-x-1/2 rounded-full blur-[90px]"
+          style={{ background: "radial-gradient(closest-side, rgba(94,106,210,0.28), transparent)" }}
+        />
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             {/* Eyebrow badge */}
             <div
-              className="mb-7 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[13px] font-medium"
+              className="rise-in shimmer mb-7 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[13px] font-medium"
               style={{
                 background: "var(--ln-surface-1)",
                 border: "1px solid var(--ln-hairline)",
                 color: "var(--ln-ink-muted)",
                 letterSpacing: "0.4px",
+                ["--i" as string]: 0,
               }}
             >
               <SparklesIcon className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--ln-primary-hover)" }} />
@@ -187,12 +206,13 @@ const LandingPage: React.FC = () => {
             </div>
 
             <h1
-              className="mx-auto max-w-3xl font-semibold"
+              className="rise-in mx-auto max-w-3xl font-semibold"
               style={{
                 color: "var(--ln-ink)",
                 fontSize: "clamp(2.5rem, 6vw, 5rem)",
                 lineHeight: 1.05,
                 letterSpacing: "-0.03em",
+                ["--i" as string]: 1,
               }}
             >
               Contracts decoded.
@@ -201,28 +221,32 @@ const LandingPage: React.FC = () => {
             </h1>
 
             <p
-              className="mx-auto mt-6 max-w-2xl"
+              className="rise-in mx-auto mt-6 max-w-2xl"
               style={{
                 color: "var(--ln-ink-subtle)",
                 fontSize: "clamp(1rem, 2vw, 1.25rem)",
                 lineHeight: 1.5,
                 letterSpacing: "-0.1px",
+                ["--i" as string]: 2,
               }}
             >
               Upload any legal contract and get instant clause-by-clause analysis, risk scoring,
               negotiation suggestions, and deadline tracking — in plain English.
             </p>
 
-            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <div
+              className="rise-in mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
+              style={{ ["--i" as string]: 3 }}
+            >
               <button
                 onClick={() => router.push("/signup")}
-                className="w-full sm:w-auto inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors cursor-pointer"
+                className="btn-sheen w-full sm:w-auto inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors cursor-pointer group"
                 style={{ background: "var(--ln-primary)" }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "var(--ln-primary-hover)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "var(--ln-primary)"; }}
               >
                 Start Analysing Free
-                <ArrowRightIcon className="ml-2 h-4 w-4" />
+                <ArrowRightIcon className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </button>
               <button
                 onClick={() => router.push("/login")}
@@ -241,7 +265,7 @@ const LandingPage: React.FC = () => {
           </div>
 
           {/* Product UI mockup — the protagonist, rendered from live components */}
-          <div className="mt-14 sm:mt-16">
+          <div className="rise-in float-slow mt-14 sm:mt-16" style={{ ["--i" as string]: 4 }}>
             <HeroProductMockup />
           </div>
         </div>
@@ -250,7 +274,7 @@ const LandingPage: React.FC = () => {
       {/* Features Grid */}
       <section className="py-12 sm:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 sm:mb-16">
+          <div className="reveal text-center mb-12 sm:mb-16">
             <h2 className="text-2xl sm:text-4xl font-semibold text-ink tracking-tight">
               Everything you need to understand any contract
             </h2>
@@ -294,9 +318,15 @@ const LandingPage: React.FC = () => {
             ].map((feature, i) => (
               <div
                 key={i}
-                className="group ln-card p-6 hover:border-hairline-strong transition-colors duration-200"
+                className="reveal lift group ln-card p-6 hover:border-hairline-strong"
+                style={{ ["--i" as string]: i % 3 }}
               >
-                <div className="text-primary mb-4">{feature.icon}</div>
+                <div
+                  className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg text-primary transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"
+                  style={{ background: "rgba(94,106,210,0.12)", border: "1px solid rgba(94,106,210,0.25)" }}
+                >
+                  {feature.icon}
+                </div>
                 <h3 className="text-lg font-medium text-ink mb-2">
                   {feature.title}
                 </h3>
@@ -313,7 +343,7 @@ const LandingPage: React.FC = () => {
       <section className="py-12 sm:py-24 border-t border-hairline">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <div>
+            <div className="reveal">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-1 border border-hairline text-ink-muted text-sm font-medium mb-6">
                 <TerminalIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
                 CLI Tool · Exclusive to Verdict
@@ -346,7 +376,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             {/* Terminal mockup */}
-            <div className="rounded-xl border border-hairline bg-surface-1 overflow-hidden">
+            <div className="reveal shimmer rounded-xl border border-hairline bg-surface-1 overflow-hidden" style={{ ["--i" as string]: 1 }}>
               <div className="flex items-center gap-2 px-4 py-3 border-b border-hairline bg-canvas">
                 <div className="w-3 h-3 rounded-full bg-hairline-tertiary" />
                 <div className="w-3 h-3 rounded-full bg-hairline-tertiary" />
@@ -376,7 +406,7 @@ const LandingPage: React.FC = () => {
                   <span className="text-ink-muted"> Found 12 clauses · Risk Score: </span>
                   <span className="text-danger font-semibold">7.2/10</span>
                 </div>
-                <div className="mt-2 text-ink-muted">
+                <div className="mt-2 text-ink-muted caret">
                   <span className="text-primary">unbind&gt;</span> show risks
                 </div>
               </div>
@@ -388,7 +418,7 @@ const LandingPage: React.FC = () => {
       {/* How it works */}
       <section className="py-12 sm:py-24 border-t border-hairline">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 sm:mb-16">
+          <div className="reveal text-center mb-12 sm:mb-16">
             <h2 className="text-2xl sm:text-4xl font-semibold text-ink tracking-tight">How it works</h2>
             <p className="mt-4 text-base sm:text-lg text-ink-subtle">Three steps to contract clarity</p>
           </div>
@@ -399,40 +429,24 @@ const LandingPage: React.FC = () => {
                 step: "01",
                 title: "Upload your contract",
                 desc: "Drag and drop any PDF contract. We support NDAs, employment agreements, SaaS terms, and more.",
-                image: "/upload.png",
-                imageAlt: "Upload contract interface preview",
-                frameTitle: "Upload Contract",
+                mockup: <UploadMockup />,
               },
               {
                 step: "02",
-                title: "AI analyzes every clause",
+                title: "AI analyses every clause",
                 desc: "Our AI reads each clause, scores risk levels, extracts key dates, and generates plain-English summaries.",
-                image: "/clause.png",
-                imageAlt: "Clause analysis preview",
-                frameTitle: "Clause Analysis",
+                mockup: <ClauseMockup />,
               },
               {
                 step: "03",
                 title: "Review and negotiate",
                 desc: "Explore risks, get alternative clauses, simulate scenarios, and export a full report as PDF.",
-                image: "/nego.png",
-                imageAlt: "Negotiation helper preview",
-                frameTitle: "Negotiation Helper",
+                mockup: <NegotiationMockup />,
               },
             ].map((step, i) => (
-              <div key={i} className="text-center">
-                <div className="text-5xl font-semibold text-surface-4 mb-4" style={{ color: "var(--ln-hairline-tertiary)" }}>{step.step}</div>
-                <div className="mb-6 flex justify-center">
-                  <ScreenshotFrame
-                    src={step.image}
-                    alt={step.imageAlt}
-                    title={step.frameTitle}
-                    showControls={false}
-                    maxWidth={320}
-                    contentClassName="aspect-4/3 overflow-hidden"
-                    imageClassName="h-full object-cover object-top"
-                  />
-                </div>
+              <div key={i} className="reveal text-center" style={{ ["--i" as string]: i }}>
+                <div className="text-5xl font-semibold mb-4" style={{ color: "var(--ln-hairline-tertiary)" }}>{step.step}</div>
+                <div className="lift mb-6 flex justify-center">{step.mockup}</div>
                 <h3 className="text-lg font-medium text-ink mb-2">{step.title}</h3>
                 <p className="text-ink-subtle text-sm leading-relaxed">{step.desc}</p>
               </div>
@@ -444,8 +458,8 @@ const LandingPage: React.FC = () => {
       {/* Pricing Plans */}
       <section className="py-12 sm:py-24 border-t border-hairline">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-2xl sm:text-4xl font-bold text-white">
+          <div className="reveal text-center mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-semibold text-ink tracking-tight">
               Simple, transparent pricing
             </h2>
             <p className="mt-4 text-base sm:text-lg text-ink-subtle max-w-2xl mx-auto">
@@ -455,7 +469,7 @@ const LandingPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {/* Brief */}
-            <div className="ln-card p-6 flex flex-col">
+            <div className="reveal lift ln-card p-6 flex flex-col" style={{ ["--i" as string]: 0 }}>
               <h3 className="text-xl font-semibold text-ink mb-1">Brief</h3>
               <div className="flex items-baseline gap-1 mb-4">
                 <span className="text-3xl font-semibold text-ink">₹100</span>
@@ -483,9 +497,9 @@ const LandingPage: React.FC = () => {
             </div>
 
             {/* Motion — Popular (surface lift, per Linear featured spec) */}
-            <div className="ln-card-raised p-6 flex flex-col relative">
+            <div className="reveal lift ln-card-raised p-6 flex flex-col relative" style={{ ["--i" as string]: 1 }}>
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="bg-primary text-white px-3 py-0.5 rounded-full text-xs font-medium">
+                <span className="btn-sheen bg-primary text-white px-3 py-0.5 rounded-full text-xs font-medium inline-block">
                       POPULAR
                     </span>
               </div>
@@ -517,7 +531,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             {/* Verdict */}
-            <div className="ln-card p-6 flex flex-col relative">
+            <div className="reveal lift ln-card p-6 flex flex-col relative" style={{ ["--i" as string]: 2 }}>
               <h3 className="text-xl font-semibold text-ink mb-1">Verdict</h3>
               <div className="flex items-baseline gap-1 mb-4">
                 <span className="text-3xl font-semibold text-ink">₹1500</span>
@@ -557,9 +571,14 @@ const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* PDF Export card */}
-            <div className="ln-card p-6 sm:p-8 flex flex-col justify-between">
+            <div className="reveal lift ln-card p-6 sm:p-8 flex flex-col justify-between" style={{ ["--i" as string]: 0 }}>
               <div>
-                <DownloadIcon className="h-8 w-8 text-primary mb-4" />
+                <div
+                  className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg text-primary"
+                  style={{ background: "rgba(94,106,210,0.12)", border: "1px solid rgba(94,106,210,0.25)" }}
+                >
+                  <DownloadIcon className="h-5 w-5" />
+                </div>
                 <h3 className="text-xl font-medium text-ink mb-2">PDF Export & Modified Contracts</h3>
                 <p className="text-ink-subtle leading-relaxed">
                   Download your full analysis as a formatted PDF report. Export modified contracts
@@ -567,22 +586,21 @@ const LandingPage: React.FC = () => {
                 </p>
               </div>
               <div className="mt-6 flex justify-center">
-                <ScreenshotFrame
-                  src="/export.png"
-                  alt="PDF export report preview"
-                  title="PDF Export"
-                  showControls={false}
-                  maxWidth={520}
-                  contentClassName="aspect-2/1 overflow-hidden"
-                  imageClassName="h-full object-cover object-top"
-                />
+                <div className="w-full max-w-[440px]">
+                  <ExportMockup />
+                </div>
               </div>
             </div>
 
             {/* Dashboard card */}
-            <div className="ln-card p-6 sm:p-8 flex flex-col justify-between">
+            <div className="reveal lift ln-card p-6 sm:p-8 flex flex-col justify-between" style={{ ["--i" as string]: 1 }}>
               <div>
-                <LogoIcon className="h-8 w-8 text-primary mb-4" />
+                <div
+                  className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg text-primary"
+                  style={{ background: "rgba(94,106,210,0.12)", border: "1px solid rgba(94,106,210,0.25)" }}
+                >
+                  <LogoIcon className="h-5 w-5" />
+                </div>
                 <h3 className="text-xl font-medium text-ink mb-2">Dashboard & History</h3>
                 <p className="text-ink-subtle leading-relaxed">
                   All your past analyses in one place. Re-visit any contract, compare risk scores
@@ -590,15 +608,9 @@ const LandingPage: React.FC = () => {
                 </p>
               </div>
               <div className="mt-6 flex justify-center">
-                <ScreenshotFrame
-                  src="/dashboard.png"
-                  alt="Dashboard history preview"
-                  title="Dashboard"
-                  showControls={false}
-                  maxWidth={520}
-                  contentClassName="aspect-2/1 overflow-hidden"
-                  imageClassName="h-full object-cover object-top"
-                />
+                <div className="w-full max-w-[440px]">
+                  <DashboardMockup />
+                </div>
               </div>
             </div>
           </div>
@@ -606,8 +618,14 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* CTA */}
-      <section className="py-12 sm:py-24 border-t border-hairline">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="relative overflow-hidden py-12 sm:py-24 border-t border-hairline">
+        {/* Ambient lavender glow behind the closing line */}
+        <div
+          aria-hidden="true"
+          className="glow-pulse pointer-events-none absolute left-1/2 top-1/2 h-64 w-[38rem] max-w-[90vw] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"
+          style={{ background: "radial-gradient(closest-side, rgba(94,106,210,0.20), transparent)" }}
+        />
+        <div className="reveal relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-4xl font-semibold text-ink tracking-tight">
             Let justice be done though the heavens fall
           </h2>
@@ -618,10 +636,10 @@ const LandingPage: React.FC = () => {
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={() => router.push("/signup")}
-              className="w-full sm:w-auto cursor-pointer inline-flex items-center justify-center px-6 py-2.5 ln-btn-primary"
+              className="btn-sheen group w-full sm:w-auto cursor-pointer inline-flex items-center justify-center px-6 py-2.5 ln-btn-primary"
             >
               Get Started Free
-              <ArrowRightIcon className="ml-2 h-4 w-4" />
+              <ArrowRightIcon className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </button>
             <button
               onClick={() => router.push("/login")}
@@ -658,16 +676,16 @@ const LandingPage: React.FC = () => {
       {/* Lawyer Hero */}
       <section className="pt-12 sm:pt-16 lg:pt-20 pb-10 relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-1 border border-hairline text-ink-muted text-sm font-medium mb-8">
+          <div className="rise-in inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-1 border border-hairline text-ink-muted text-sm font-medium mb-8" style={{ ["--i" as string]: 0 }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-primary"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             Lawyer Referral Network · Join Now
           </div>
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-semibold tracking-tight text-ink leading-[1.05]">
+          <h1 className="rise-in text-4xl sm:text-6xl lg:text-7xl font-semibold tracking-tight text-ink leading-[1.05]" style={{ ["--i" as string]: 1 }}>
             Grow your practice.
             <br />
             Connect with clients.
           </h1>
-          <p className="mt-6 text-lg sm:text-xl text-ink-subtle max-w-2xl mx-auto leading-relaxed">
+          <p className="rise-in mt-6 text-lg sm:text-xl text-ink-subtle max-w-2xl mx-auto leading-relaxed" style={{ ["--i" as string]: 2 }}>
             Join our curated Lawyer Referral Network and get matched with clients who need your specific legal expertise — powered by UnBind AI contract analysis.
           </p>
           <div className="mt-8 flex justify-center">

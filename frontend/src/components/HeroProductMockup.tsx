@@ -65,7 +65,7 @@ const CLAUSES = [
 export default function HeroProductMockup() {
   return (
     <div
-      className="w-full overflow-hidden rounded-[16px] text-left"
+      className="shimmer w-full overflow-hidden rounded-[16px] text-left"
       style={{
         background: "var(--ln-surface-1)",
         boxShadow:
