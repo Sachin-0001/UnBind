@@ -70,6 +70,14 @@ export interface StoredAnalysis {
   documentText: string;
 }
 
+export interface AnalysisProgressEvent {
+  stage: string;
+  message: string;
+  total?: number;
+  completed?: number;
+  index?: number;
+}
+
 export interface LawyerProfile {
   id: string;
   name: string;

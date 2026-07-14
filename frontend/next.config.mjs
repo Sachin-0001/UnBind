@@ -8,6 +8,11 @@ const rawBackendUrl =
 const BACKEND_URL = rawBackendUrl.replace(/\/+$/, "").replace(/\/api$/, "");
 
 const nextConfig = {
+  // Exposes the resolved backend origin to client code (e.g. for SSE fetches
+  // that must bypass the rewrite proxy below, which buffers responses).
+  env: {
+    NEXT_PUBLIC_BACKEND_ORIGIN: BACKEND_URL,
+  },
   async rewrites() {
     return [
       {

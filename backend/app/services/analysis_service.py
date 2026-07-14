@@ -289,30 +289,52 @@ async def analyze_contract(
     document_text: str,
     role: str,
     user_id: str | None = None,
-    on_progress: Callable[[str], None] | None = None,
+    on_progress: Callable[[str, dict], None] | None = None,
 ) -> dict:
     """Full contract analysis pipeline"""
 
-    def progress(msg: str) -> None:
+    def progress(stage: str, **detail: Any) -> None:
         if on_progress:
-            on_progress(msg)
+            on_progress(stage, detail)
 
-    progress("Converting document to Markdown for better parsing...")
+    progress("converting", message="Converting document to Markdown for better parsing...")
     markdown_text = convert_pdf_to_markdown(document_text)
 
-    progress("Validating legal document...")
+    progress("validating", message="Validating legal document...")
     is_legal = await validate_legal_document(markdown_text, user_id=user_id)
     if not is_legal:
         raise ValueError("NOT_A_LEGAL_DOCUMENT")
 
-    progress("Chunking document...")
+    progress("chunking", message="Chunking document...")
     # Smaller chunks keep each per-chunk clause analysis within the model's
     # output-token limit, avoiding truncated (unparseable) JSON responses.
     chunks = chunk_text(markdown_text, 2000, 200)
+    total_chunks = len(chunks)
 
-    progress(f"Analyzing {len(chunks)} document section(s)...")
+    progress(
+        "analyzing_start",
+        message=f"Analyzing {total_chunks} document section(s)...",
+        total=total_chunks,
+        completed=0,
+    )
+
+    completed = 0
+
+    async def _analyze_chunk_tracked(index: int, chunk: str) -> tuple[list[dict], bool]:
+        nonlocal completed
+        result = await _analyze_chunk(chunk, role, user_id=user_id)
+        completed += 1
+        progress(
+            "analyzing_clause",
+            message=f"Analysing clause {completed} of {total_chunks}...",
+            total=total_chunks,
+            completed=completed,
+            index=index,
+        )
+        return result
+
     chunk_results = await asyncio.gather(
-        *[_analyze_chunk(chunk, role, user_id=user_id) for chunk in chunks]
+        *[_analyze_chunk_tracked(i, chunk) for i, chunk in enumerate(chunks)]
     )
     all_clauses: list[dict] = []
     parse_failures = 0
@@ -332,7 +354,7 @@ async def analyze_contract(
             "It might be too short or in an unsupported format."
         )
 
-    progress("Creating chunk summaries...")
+    progress("summarizing", message="Creating chunk summaries...")
     chunk_summaries = await _create_chunk_summaries(
         chunks,
         all_clauses,
@@ -340,7 +362,7 @@ async def analyze_contract(
         user_id=user_id,
     )
 
-    progress("Synthesizing final report...")
+    progress("synthesizing", message="Synthesizing final report...")
     final_report = await _synthesize_report(all_clauses, role, user_id=user_id)
 
     return {

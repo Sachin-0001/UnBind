@@ -11,8 +11,8 @@ import {
   CalendarIcon,
   AlertTriangleIcon,
 } from "./Icons";
-import { Herr_Von_Muellerhoff } from "next/font/google";
 import ScreenshotFrame from "./ScreenshotFrame";
+import HeroProductMockup from "./HeroProductMockup";
 import { registerLawyer } from "@/services/api";
 
 const TerminalIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -161,121 +161,88 @@ const LandingPage: React.FC = () => {
 
       {/* User Tab */}
       {activeTab === 'users' && (<>
-      {/* Hero */}
-      <section className="pt-12 sm:pt-16 lg:pt-24 pb-16 sm:pb-20 relative overflow-hidden">
-        {/* Subtle grid background */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] bg-size-[64px_64px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-200 h-150 bg-indigo-500/5 rounded-full blur-3xl" />
-
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      {/* Hero — Linear-style: near-black canvas, lavender accent, product UI as protagonist */}
+      <section
+        className="relative overflow-hidden rounded-3xl pt-16 sm:pt-24 lg:pt-28 pb-12 sm:pb-16"
+        style={{
+          background:
+            "radial-gradient(120% 80% at 50% -10%, rgba(94,106,210,0.10), transparent 60%), var(--ln-canvas)",
+          boxShadow: "0 0 0 1px var(--ln-hairline)",
+        }}
+      >
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm font-medium mb-8">
-              <SparklesIcon className="h-3.5 w-3.5 shrink-0" />
+            {/* Eyebrow badge */}
+            <div
+              className="mb-7 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[13px] font-medium"
+              style={{
+                background: "var(--ln-surface-1)",
+                border: "1px solid var(--ln-hairline)",
+                color: "var(--ln-ink-muted)",
+                letterSpacing: "0.4px",
+              }}
+            >
+              <SparklesIcon className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--ln-primary-hover)" }} />
               AI-Powered Contract Intelligence
             </div>
 
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1]">
+            <h1
+              className="mx-auto max-w-3xl font-semibold"
+              style={{
+                color: "var(--ln-ink)",
+                fontSize: "clamp(2.5rem, 6vw, 5rem)",
+                lineHeight: 1.05,
+                letterSpacing: "-0.03em",
+              }}
+            >
               Contracts decoded.
               <br />
-              <span className="bg-linear-to-r from-indigo-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
-                Risks revealed.
-              </span>
+              Risks revealed.
             </h1>
 
-            <p className="mt-6 text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            <p
+              className="mx-auto mt-6 max-w-2xl"
+              style={{
+                color: "var(--ln-ink-subtle)",
+                fontSize: "clamp(1rem, 2vw, 1.25rem)",
+                lineHeight: 1.5,
+                letterSpacing: "-0.1px",
+              }}
+            >
               Upload any legal contract and get instant clause-by-clause analysis, risk scoring,
               negotiation suggestions, and deadline tracking — in plain English.
             </p>
 
-            {/* Install command */}
-            <div className="mt-10 flex flex-col items-center gap-4">
-              <div className="inline-flex max-w-full items-center gap-2">
-                <div
-                  onClick={handleCopy}
-                  className="group cursor-pointer inline-flex min-w-0 items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 rounded-lg bg-gray-900/80 border border-gray-700/80 hover:border-indigo-500/50 transition-all duration-200"
-                >
-                  <span className="text-green-400 font-mono text-sm select-none">$</span>
-                  <code className="truncate text-gray-200 font-mono text-sm sm:text-base">
-                    npm install -g unbindai
-                  </code>
-                  <span className="shrink-0 text-gray-500 group-hover:text-indigo-400 transition-colors">
-                    {copied ? (
-                      <CheckIcon className="h-4 w-4 text-green-400" />
-                    ) : (
-                      <CopyIcon className="h-4 w-4" />
-                    )}
-                  </span>
-                </div>
-                <div className="relative shrink-0 group/info">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 hover:text-indigo-400 cursor-help transition-colors">
-                    <circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="16" y2="12" /><line x1="12" x2="12.01" y1="8" y2="8" />
-                  </svg>
-                  <div
-                    className="absolute bottom-full left-1/2 z-20 mb-2 w-64 -translate-x-1/2 translate-y-1 rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-gray-300 opacity-0 shadow-xl shadow-black/30 transition-all duration-200 ease-out pointer-events-auto group-hover/info:opacity-100 group-hover/info:translate-y-0 hover:opacity-100 hover:translate-y-0"
-                    role="tooltip"
-                  >
-                    {/* <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-indigo-300">
-                      CLI access
-                    </p> */}
-                    <ul className="list-disc space-y-1 pl-4 whitespace-normal">
-                      <li>Available only for Verdict plan users</li>
-                      <li>
-                        Node.js v18+ required.{' '}
-                        <a
-                          href="https://nodejs.org/en"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-indigo-400 hover:text-indigo-300"
-                        >
-                          Download
-                        </a>
-                      </li>
-                    </ul>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row items-center gap-3">
-                <button
-                  onClick={() => router.push("/signup")}
-                  className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 font-semibold text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-500/25 hover:bg-indigo-500 hover:shadow-indigo-500/40 transition-all duration-200 cursor-pointer"
-                >
-                  Start Analyzing Free
-                  <ArrowRightIcon className="ml-2 h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => router.push("/login")}
-                  className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 font-semibold text-gray-300 bg-white/5 border border-gray-700 rounded-lg hover:bg-white/10 hover:border-gray-600 transition-all duration-200 cursor-pointer"
-                >
-                  Sign In
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-10 flex justify-center">
-              <div className="flex flex-col items-center text-gray-500 animate-float-y" aria-hidden="true">
-                <ChevronDownIcon className="h-5 w-5" />
-                <ChevronDownIcon className="-mt-2 h-5 w-5 opacity-70" />
-              </div>
+            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <button
+                onClick={() => router.push("/signup")}
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors cursor-pointer"
+                style={{ background: "var(--ln-primary)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "var(--ln-primary-hover)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "var(--ln-primary)"; }}
+              >
+                Start Analysing Free
+                <ArrowRightIcon className="ml-2 h-4 w-4" />
+              </button>
+              <button
+                onClick={() => router.push("/login")}
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-medium transition-colors cursor-pointer"
+                style={{
+                  background: "var(--ln-surface-1)",
+                  border: "1px solid var(--ln-hairline)",
+                  color: "var(--ln-ink)",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "var(--ln-surface-2)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "var(--ln-surface-1)"; }}
+              >
+                Sign In
+              </button>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Hero Screenshot Placeholder */}
-      <section className="pb-16 sm:pb-24">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center">
-            <ScreenshotFrame
-              src="/analysis.png"
-              alt="Risk analysis dashboard preview"
-              title="Risk Analysis Dashboard"
-              showUrlBar
-              url="unbindai.vercel.app/analysis"
-              maxWidth={1080}
-              priority
-            />
+          {/* Product UI mockup — the protagonist, rendered from live components */}
+          <div className="mt-14 sm:mt-16">
+            <HeroProductMockup />
           </div>
         </div>
       </section>
@@ -648,10 +615,10 @@ const LandingPage: React.FC = () => {
       <section className="py-12 sm:py-24 border-t border-gray-800/50">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-4xl font-bold text-white">
-            Stop signing contracts you don&apos;t fully understand
+            Let justice be done though the heavens fall
           </h2>
           <p className="mt-4 text-base sm:text-lg text-gray-400 max-w-xl mx-auto">
-            Get started free — no credit card required. Analyze your first contract in under two minutes.
+            Get started free — no credit card required. Analyse your first contract in under two minutes.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">

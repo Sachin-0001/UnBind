@@ -1,6 +1,18 @@
-import type { User, StoredAnalysis, AnalysisResponse, LawyerProfile } from "@/types";
+import type {
+  User,
+  StoredAnalysis,
+  AnalysisResponse,
+  LawyerProfile,
+  AnalysisProgressEvent,
+} from "@/types";
 
 const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL ?? ""}/api`;
+// Streaming (SSE) requests must bypass the Next.js rewrite proxy used by
+// API_BASE — rewrites buffer the whole response before forwarding it, which
+// defeats incremental progress events. Hit the backend origin directly.
+// NEXT_PUBLIC_BACKEND_ORIGIN is injected by next.config.mjs from the same
+// BACKEND_API_URL the rewrite uses, so both paths always agree.
+const STREAM_API_BASE = process.env.NEXT_PUBLIC_BACKEND_ORIGIN || "http://localhost:8000";
 const ACCESS_TOKEN_KEY = "unbind_access_token";
 
 /**
@@ -174,6 +186,88 @@ export const uploadAndAnalyze = async (
     throw await toApiError(res);
   }
   return res.json() as Promise<StoredAnalysis>;
+};
+
+/**
+ * Parses a text/event-stream body into `{event, data}` frames as they arrive.
+ * SSE frames are separated by a blank line; each frame carries an `event:`
+ * line naming the type and a `data:` line with a JSON payload.
+ */
+async function* parseSseStream(
+  body: ReadableStream<Uint8Array>,
+): AsyncGenerator<{ event: string; data: any }> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      let sepIndex: number;
+      while ((sepIndex = buffer.indexOf("\n\n")) !== -1) {
+        const rawFrame = buffer.slice(0, sepIndex);
+        buffer = buffer.slice(sepIndex + 2);
+
+        let event = "message";
+        let data = "";
+        for (const line of rawFrame.split("\n")) {
+          if (line.startsWith("event:")) event = line.slice(6).trim();
+          else if (line.startsWith("data:")) data = line.slice(5).trim();
+        }
+        if (data) {
+          try {
+            yield { event, data: JSON.parse(data) };
+          } catch {
+            // Ignore malformed frames rather than aborting the whole stream.
+          }
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+/**
+ * Streams contract analysis progress over SSE while uploading a file.
+ * Calls `onProgress` for each intermediate event and resolves with the final
+ * stored analysis once the `result` event arrives.
+ */
+export const uploadAndAnalyzeStream = async (
+  file: File,
+  role: string,
+  onProgress: (event: AnalysisProgressEvent) => void,
+): Promise<StoredAnalysis> => {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("role", role);
+  const requestInit = withAuthHeader({
+    method: "POST",
+    credentials: "include",
+    body: form,
+  });
+  const res = await fetch(
+    `${STREAM_API_BASE}/api/analysis/upload/stream`,
+    requestInit,
+  );
+  if (!res.ok || !res.body) {
+    throw await toApiError(res);
+  }
+
+  for await (const { event, data } of parseSseStream(res.body)) {
+    if (event === "progress") {
+      onProgress(data as AnalysisProgressEvent);
+    } else if (event === "error") {
+      throw new ApiError(422, data.detail ?? data.code ?? "Analysis failed");
+    } else if (event === "result") {
+      return data as StoredAnalysis;
+    }
+  }
+
+  throw new ApiError(500, "Stream ended without a result");
 };
 
 export const getUserAnalyses = async (): Promise<StoredAnalysis[]> => {

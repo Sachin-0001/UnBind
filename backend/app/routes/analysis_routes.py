@@ -1,8 +1,11 @@
+import asyncio
 import io
+import json
 from datetime import datetime, timezone
 
 from bson import ObjectId
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import StreamingResponse
 from langsmith.run_helpers import tracing_context
 
 from app.auth import get_current_user_id
@@ -11,6 +14,95 @@ from app.schemas import AnalyzeRequest, SimulateRequest
 from app.services.analysis_service import analyze_contract, simulate_impact
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
+
+
+def _sse_event(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+async def _stream_analysis(
+    text: str,
+    role: str,
+    file_name: str,
+    user_id: str,
+    tracing_tags: list[str],
+):
+    """Run analyze_contract while streaming progress events over SSE.
+
+    The pipeline itself is a single awaited coroutine, so progress updates
+    (fired synchronously from inside it via on_progress) are relayed to the
+    client through a queue drained by a concurrently running consumer task.
+    """
+    queue: asyncio.Queue = asyncio.Queue()
+
+    def on_progress(stage: str, detail: dict) -> None:
+        queue.put_nowait({"stage": stage, **detail})
+
+    async def run_pipeline() -> dict:
+        with tracing_context(
+            metadata={
+                "endpoint": "analysis.analyze.stream",
+                "user_id": user_id,
+                "file_name": file_name,
+                "role": role,
+                "text_length": len(text or ""),
+            },
+            tags=tracing_tags,
+        ):
+            return await analyze_contract(
+                text, role, user_id=user_id, on_progress=on_progress
+            )
+
+    pipeline_task = asyncio.create_task(run_pipeline())
+
+    try:
+        while not pipeline_task.done():
+            try:
+                event = await asyncio.wait_for(queue.get(), timeout=0.5)
+                yield _sse_event("progress", event)
+            except asyncio.TimeoutError:
+                continue
+
+        # Drain any events emitted right before completion.
+        while not queue.empty():
+            yield _sse_event("progress", queue.get_nowait())
+
+        try:
+            result = pipeline_task.result()
+        except ValueError as e:
+            if str(e) == "NOT_A_LEGAL_DOCUMENT":
+                yield _sse_event("error", {"code": "NOT_A_LEGAL_DOCUMENT"})
+            else:
+                yield _sse_event("error", {"code": "ERROR", "detail": str(e)})
+            return
+        except RuntimeError as e:
+            yield _sse_event("error", {"code": "ERROR", "detail": str(e)})
+            return
+
+        db = get_db()
+        doc = {
+            "userId": user_id,
+            "fileName": file_name,
+            "analysisDate": datetime.utcnow().isoformat(),
+            "analysisResult": result,
+            "documentText": text,
+        }
+        inserted = await db.analyses.insert_one(doc)
+
+        yield _sse_event(
+            "result",
+            {
+                "id": str(inserted.inserted_id),
+                "userId": user_id,
+                "fileName": file_name,
+                "analysisDate": doc["analysisDate"],
+                "analysisResult": result,
+                "documentText": text,
+            },
+        )
+    finally:
+        if not pipeline_task.done():
+            pipeline_task.cancel()
 
 # Daily analysis limits per plan (None = unlimited)
 PLAN_LIMITS: dict[str | None, int | None] = {
@@ -173,6 +265,62 @@ async def upload_and_analyze(
         "analysisResult": result,
         "documentText": text,
     }
+
+
+@router.post("/analyze/stream")
+async def analyze_stream(body: AnalyzeRequest, request: Request):
+    """Analyse contract text, streaming per-clause progress via SSE."""
+    user_id = await get_current_user_id(request)
+    await _enforce_rate_limit(user_id)
+
+    return StreamingResponse(
+        _stream_analysis(
+            body.text,
+            body.role,
+            body.fileName,
+            user_id,
+            ["analysis", "api", "text", "stream"],
+        ),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@router.post("/upload/stream")
+async def upload_and_analyze_stream(
+    request: Request,
+    file: UploadFile = File(...),
+    role: str = Form(""),
+):
+    """Upload a file (PDF or text), extract text, and stream analysis progress via SSE."""
+    user_id = await get_current_user_id(request)
+    await _enforce_rate_limit(user_id)
+
+    content = await file.read()
+    file_name = file.filename or "document"
+
+    if file.content_type == "application/pdf" or file_name.lower().endswith(".pdf"):
+        text = _extract_pdf_text(content)
+    else:
+        text = content.decode("utf-8", errors="replace")
+
+    if not text or len(text.strip()) < 50:
+        raise HTTPException(
+            status_code=422,
+            detail="Not enough text extracted from the document.",
+        )
+
+    return StreamingResponse(
+        _stream_analysis(
+            text,
+            role,
+            file_name,
+            user_id,
+            ["analysis", "api", "upload", "stream"],
+        ),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.get("/history")

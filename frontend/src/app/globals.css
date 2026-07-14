@@ -4,6 +4,29 @@
   --bg-glass: rgba(17, 24, 39, 0.5);
   --border-glass: rgba(99, 102, 241, 0.2);
   --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.15);
+
+  /* ── Linear design system tokens (see DESIGN.md) ── */
+  /* Canvas + four-step surface ladder */
+  --ln-canvas: #010102;
+  --ln-surface-1: #0f1011;
+  --ln-surface-2: #141516;
+  --ln-surface-3: #18191a;
+  --ln-surface-4: #191a1b;
+  /* Hairline borders */
+  --ln-hairline: #23252a;
+  --ln-hairline-strong: #34343a;
+  --ln-hairline-tertiary: #3e3e44;
+  /* Ink (text) ramp */
+  --ln-ink: #f7f8f8;
+  --ln-ink-muted: #d0d6e0;
+  --ln-ink-subtle: #8a8f98;
+  --ln-ink-tertiary: #62666d;
+  /* Lavender-blue accent — the single chromatic accent */
+  --ln-primary: #5e6ad2;
+  --ln-primary-hover: #828fff;
+  --ln-primary-focus: #5e69d1;
+  /* Semantic (used sparingly for risk badges in product mockups) */
+  --ln-success: #27a644;
 }
 
 body {
