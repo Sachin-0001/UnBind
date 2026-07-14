@@ -176,7 +176,7 @@ const LandingPage: React.FC = () => {
       {/* Hero — Linear-style: near-black canvas, lavender accent, product UI as protagonist */}
       <section className="relative pt-16 sm:pt-24 lg:pt-28 pb-12 sm:pb-16">
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
+          <div className="text-center" /* copy stays narrow for readability */>
             {/* Eyebrow badge */}
             <div
               className="rise-in shimmer mb-7 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[13px] font-medium"
@@ -250,9 +250,13 @@ const LandingPage: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Product UI mockup — the protagonist, rendered from live components */}
-          <div className="rise-in mt-14 sm:mt-16" style={{ ["--i" as string]: 4 }}>
+        {/* Product UI mockup — the protagonist, rendered from live components.
+            Wider than the copy column above, matching Linear's wide product
+            screenshots; interactive so visitors can click through clauses. */}
+        <div className="relative mx-auto mt-14 max-w-7xl px-4 sm:mt-16 sm:px-6 lg:px-8">
+          <div className="rise-in" style={{ ["--i" as string]: 4 }}>
             <div className="float-slow">
               <HeroProductMockup />
             </div>
