@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useScrollProgress } from "@/hooks/useScrollProgress";
+import { useScrollJack } from "@/hooks/useScrollJack";
 
 interface Step {
   step: string;
@@ -15,132 +15,161 @@ interface HowItWorksFlowProps {
 }
 
 /**
- * "How it works" as a connected flow: an SVG path winds between the three
- * step nodes and draws itself in (via stroke-dashoffset) as the section
- * scrolls through the viewport. Each step's content fades/rises in once the
- * drawing line reaches its node, so the steps feel like stations along one
- * continuous path rather than three unrelated cards.
+ * "How it works" as a hard scroll-jacked flow: once this section reaches
+ * the top of the viewport, native page scrolling is intercepted and every
+ * scroll/swipe/arrow-key gesture instead drives an SVG path drawing itself
+ * in and lighting up each step in turn. Because scroll input is captured
+ * directly (see useScrollJack) rather than relying on scrollTop position,
+ * no scroll speed — fast wheel flick, trackpad swipe, scrollbar drag — can
+ * skip past the section before all three steps have revealed. Native
+ * scrolling resumes automatically the instant the flow completes.
  *
- * The path itself is decorative chrome; the mockups passed in via `steps`
- * are rendered unchanged.
+ * The mockups passed in via `steps` are rendered unchanged; only the
+ * surrounding reveal mechanism is new.
  */
 export default function HowItWorksFlow({ steps }: HowItWorksFlowProps) {
-  const { ref, progress } = useScrollProgress<HTMLDivElement>();
-
-  // Path travels roughly 8% -> 92% of scroll progress through the section;
-  // outside that band it's fully hidden / fully drawn.
-  const PATH_START = 0.08;
-  const PATH_END = 0.92;
-  const drawT = Math.min(
-    1,
-    Math.max(0, (progress - PATH_START) / (PATH_END - PATH_START)),
-  );
+  const { containerRef, progress: drawT, locked } = useScrollJack();
 
   // Each step "arrives" at an even fraction along the drawn path.
   const stepThresholds = steps.map((_, i) => (i + 0.5) / steps.length);
+  const allArrived = drawT >= stepThresholds[stepThresholds.length - 1] - 0.02;
 
   return (
-    <div ref={ref} className="relative">
-      {/* ── Desktop: zigzag path connecting three nodes left/center/right ── */}
-      <div className="relative hidden md:block" aria-hidden="true">
-        <svg
-          viewBox="0 0 1200 160"
-          preserveAspectRatio="none"
-          className="pointer-events-none absolute left-0 top-[52px] h-[2px] w-full overflow-visible"
-        >
-          <path
-            d="M 150 20 C 350 20, 350 140, 600 140 C 850 140, 850 20, 1050 20"
-            fill="none"
-            stroke="var(--ln-hairline-strong)"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          <path
-            d="M 150 20 C 350 20, 350 140, 600 140 C 850 140, 850 20, 1050 20"
-            fill="none"
-            stroke="var(--ln-primary)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            pathLength={1}
-            style={{
-              strokeDasharray: 1,
-              strokeDashoffset: 1 - drawT,
-              filter: "drop-shadow(0 0 4px rgba(94,106,210,0.6))",
-              transition: "stroke-dashoffset 0.05s linear",
-            }}
-          />
-          {/* Node dots that light up as the line reaches them */}
-          {[150, 600, 1050].map((cx, i) => {
-            const cy = i === 1 ? 140 : 20;
-            const lit = drawT >= stepThresholds[i] - 0.02;
-            return (
-              <circle
-                key={i}
-                cx={cx}
-                cy={cy}
-                r={lit ? 7 : 5}
-                fill={lit ? "var(--ln-primary)" : "var(--ln-surface-2)"}
-                stroke={lit ? "var(--ln-primary)" : "var(--ln-hairline-strong)"}
+    // Tall spacer so there's room in the document flow for the pinned
+    // content; height matters less than with a pure-CSS sticky pin since
+    // useScrollJack drives progress directly rather than from scrollTop,
+    // but it still needs to exceed one viewport so the pin has somewhere
+    // to "release" into once the flow completes.
+    <div ref={containerRef} className="relative" style={{ height: "160vh" }}>
+      <div className="sticky top-0 flex h-screen flex-col justify-center py-12">
+        <div className="mb-16 text-center sm:mb-24">
+          <h2 className="text-2xl sm:text-4xl font-semibold text-ink tracking-tight">How it works</h2>
+          <p className="mt-4 text-base sm:text-lg text-ink-subtle">
+            {allArrived ? "Three steps to contract clarity" : "Scroll to reveal each step"}
+          </p>
+        </div>
+
+        <div className="relative">
+          {/* ── Desktop: zigzag path connecting three nodes left/center/right ── */}
+          <div className="relative hidden md:block" aria-hidden="true">
+            <svg
+              viewBox="0 0 1200 160"
+              preserveAspectRatio="none"
+              className="pointer-events-none absolute left-0 top-[52px] h-[2px] w-full overflow-visible"
+            >
+              <path
+                d="M 150 20 C 350 20, 350 140, 600 140 C 850 140, 850 20, 1050 20"
+                fill="none"
+                stroke="var(--ln-hairline-strong)"
                 strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <path
+                d="M 150 20 C 350 20, 350 140, 600 140 C 850 140, 850 20, 1050 20"
+                fill="none"
+                stroke="var(--ln-primary)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                pathLength={1}
                 style={{
-                  transition: "r 0.3s ease, fill 0.3s ease, stroke 0.3s ease",
-                  filter: lit ? "drop-shadow(0 0 6px rgba(94,106,210,0.7))" : "none",
+                  strokeDasharray: 1,
+                  strokeDashoffset: 1 - drawT,
+                  filter: "drop-shadow(0 0 4px rgba(94,106,210,0.6))",
                 }}
               />
-            );
-          })}
-        </svg>
-      </div>
+              {/* Node dots that light up as the line reaches them */}
+              {[150, 600, 1050].map((cx, i) => {
+                const cy = i === 1 ? 140 : 20;
+                const lit = drawT >= stepThresholds[i] - 0.02;
+                return (
+                  <circle
+                    key={i}
+                    cx={cx}
+                    cy={cy}
+                    r={lit ? 7 : 5}
+                    fill={lit ? "var(--ln-primary)" : "var(--ln-surface-2)"}
+                    stroke={lit ? "var(--ln-primary)" : "var(--ln-hairline-strong)"}
+                    strokeWidth="2"
+                    style={{
+                      transition: "r 0.3s ease, fill 0.3s ease, stroke 0.3s ease",
+                      filter: lit ? "drop-shadow(0 0 6px rgba(94,106,210,0.7))" : "none",
+                    }}
+                  />
+                );
+              })}
+            </svg>
+          </div>
 
-      <div className="grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-8">
-        {steps.map((s, i) => {
-          const arrived = drawT >= stepThresholds[i] - 0.05;
-          return (
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-8">
+            {steps.map((s, i) => {
+              const arrived = drawT >= stepThresholds[i] - 0.05;
+              return (
+                <div
+                  key={i}
+                  className="text-center transition-all duration-500 ease-out"
+                  style={{
+                    opacity: arrived ? 1 : 0.25,
+                    transform: arrived ? "translateY(0)" : "translateY(18px)",
+                  }}
+                >
+                  <div
+                    className="mx-auto mb-4 flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-colors duration-500"
+                    style={{
+                      background: arrived ? "var(--ln-primary)" : "var(--ln-surface-2)",
+                      color: arrived ? "#fff" : "var(--ln-ink-tertiary)",
+                      border: `1px solid ${arrived ? "var(--ln-primary)" : "var(--ln-hairline-strong)"}`,
+                    }}
+                  >
+                    {i + 1}
+                  </div>
+                  <div className="lift mb-6 flex justify-center">{s.mockup}</div>
+                  <h3 className="text-lg font-medium text-ink mb-2">{s.title}</h3>
+                  <p className="text-ink-subtle text-sm leading-relaxed">{s.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── Mobile: simple vertical connector between stacked steps ── */}
+          <div
+            className="pointer-events-none absolute left-1/2 top-9 -z-10 block w-[2px] md:hidden"
+            style={{
+              height: "calc(100% - 36px)",
+              background: "var(--ln-hairline-strong)",
+              transform: "translateX(-50%)",
+            }}
+            aria-hidden="true"
+          >
             <div
-              key={i}
-              className="text-center transition-all duration-700 ease-out"
+              className="w-full"
               style={{
-                opacity: arrived ? 1 : 0.25,
-                transform: arrived ? "translateY(0)" : "translateY(18px)",
+                height: `${drawT * 100}%`,
+                background: "var(--ln-primary)",
+                boxShadow: "0 0 8px rgba(94,106,210,0.6)",
               }}
-            >
-              <div
-                className="mx-auto mb-4 flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-colors duration-500"
-                style={{
-                  background: arrived ? "var(--ln-primary)" : "var(--ln-surface-2)",
-                  color: arrived ? "#fff" : "var(--ln-ink-tertiary)",
-                  border: `1px solid ${arrived ? "var(--ln-primary)" : "var(--ln-hairline-strong)"}`,
-                }}
-              >
-                {i + 1}
-              </div>
-              <div className="lift mb-6 flex justify-center">{s.mockup}</div>
-              <h3 className="text-lg font-medium text-ink mb-2">{s.title}</h3>
-              <p className="text-ink-subtle text-sm leading-relaxed">{s.desc}</p>
-            </div>
-          );
-        })}
-      </div>
+            />
+          </div>
+        </div>
 
-      {/* ── Mobile: simple vertical connector between stacked steps ── */}
-      <div
-        className="pointer-events-none absolute left-1/2 top-9 -z-10 block w-[2px] md:hidden"
-        style={{
-          height: "calc(100% - 36px)",
-          background: "var(--ln-hairline-strong)",
-          transform: "translateX(-50%)",
-        }}
-        aria-hidden="true"
-      >
+        {/* Scroll-to-continue hint — visible only while locked and incomplete */}
         <div
-          className="w-full"
-          style={{
-            height: `${drawT * 100}%`,
-            background: "var(--ln-primary)",
-            boxShadow: "0 0 8px rgba(94,106,210,0.6)",
-            transition: "height 0.05s linear",
-          }}
-        />
+          className="mt-10 flex flex-col items-center gap-1.5 transition-opacity duration-300"
+          style={{ opacity: locked && !allArrived ? 1 : 0 }}
+          aria-hidden={!locked || allArrived}
+        >
+          <span className="text-xs text-ink-tertiary">Keep scrolling</span>
+          <svg
+            className="h-4 w-4 animate-bounce text-ink-tertiary"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </div>
       </div>
     </div>
   );

@@ -409,15 +409,11 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* How it works — a connected flow: an SVG path draws itself in as you
-          scroll, lighting up each step in turn rather than a static grid. */}
-      <section className="py-12 sm:py-24 border-t border-hairline">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="reveal text-center mb-16 sm:mb-24">
-            <h2 className="text-2xl sm:text-4xl font-semibold text-ink tracking-tight">How it works</h2>
-            <p className="mt-4 text-base sm:text-lg text-ink-subtle">Three steps to contract clarity</p>
-          </div>
-
+      {/* How it works — a scroll-pinned flow: the section holds in place
+          while an SVG path draws itself in and lights up each step, so you
+          can't scroll past it before the whole flow has resolved. */}
+      <section className="relative border-t border-hairline">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <HowItWorksFlow
             steps={[
               {
