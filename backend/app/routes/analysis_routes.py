@@ -49,9 +49,7 @@ async def _stream_analysis(
             },
             tags=tracing_tags,
         ):
-            return await analyze_contract(
-                text, role, user_id=user_id, on_progress=on_progress
-            )
+            return await analyze_contract(text, role, user_id=user_id, on_progress=on_progress)
 
     pipeline_task = asyncio.create_task(run_pipeline())
 
@@ -103,6 +101,7 @@ async def _stream_analysis(
     finally:
         if not pipeline_task.done():
             pipeline_task.cancel()
+
 
 # Daily analysis limits per plan (None = unlimited)
 PLAN_LIMITS: dict[str | None, int | None] = {
