@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { LogoIcon } from "../Icons";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
-import Link from "next/dist/client/link";
+import BackLink from "../BackLink";
 
 const SignupView: React.FC = () => {
   const [username, setUsername] = useState("");
@@ -59,13 +59,8 @@ const SignupView: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center pt-6 sm:pt-10">
       <div className="w-full max-w-3xl mb-4 text-left">
-         <Link href="/"><button
-            // onClick={onBack}
-            className="text-sm text-primary hover:text-primary-hover transition-colors"
-          >
-            &larr; Back
-          </button></Link>
-        </div>
+        <BackLink href="/" />
+      </div>
       <div className="w-full max-w-md p-6 sm:p-8 space-y-6 ln-card">
         <div className="flex flex-col items-center space-y-2">
           <LogoIcon className="h-12 w-12 text-primary" />

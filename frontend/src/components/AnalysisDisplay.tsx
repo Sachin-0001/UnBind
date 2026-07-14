@@ -10,6 +10,7 @@ import KeyDatesView from "./KeyDatesView";
 import ImpactSimulatorView from "./ImpactSimulatorView";
 import ExportButton from "./ExportButton";
 import DocumentView from "./DocumentView";
+import BackLink from "./BackLink";
 
 interface AnalysisDisplayProps {
   analysisResult: AnalysisResponse;
@@ -59,12 +60,9 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
   return (
     <div className="w-full fade-in">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
-        <button
-          onClick={onBackToDashboard}
-          className="text-sm cursor-pointer text-primary hover:text-primary-hover transition-colors self-start"
-        >
-          &larr; Back to Dashboard
-        </button>
+        <BackLink onClick={onBackToDashboard} className="self-start">
+          Back to Dashboard
+        </BackLink>
         <ExportButton analysisResult={analysisResult} />
       </div>
 

@@ -2,7 +2,7 @@
 import React from "react";
 import Header from "@/components/Header";
 import { LogoIcon } from "@/components/Icons";
-import Link from "next/link";
+import BackLink from "@/components/BackLink";
 import { useRouter } from "next/navigation";
 import { activateUserPlan } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
@@ -64,12 +64,7 @@ export default function Pricing() {
       <div className="min-h-screen bg-canvas pt-20 sm:pt-24 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8 fade-in font-sans">
         <div className="max-w-7xl mx-auto">
             <div className="w-full max-w-3xl mb-4 text-left">
-        <Link href="/profile"><button
-          onClick={onBack}
-          className="text-sm cursor-pointer text-primary hover:text-primary-hover transition-colors"
-        >
-          &larr; Back
-        </button></Link>
+        <BackLink onClick={onBack} />
       </div>
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* Left Section - Information */}

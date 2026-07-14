@@ -8,6 +8,7 @@ import { getLawyers, contactLawyer, getUserPlan } from "@/services/api";
 import type { LawyerProfile } from "@/types";
 import Header from "@/components/Header";
 import Footer from "@/components/footer";
+import BackLink from "@/components/BackLink";
 // ─── Small icon components (inline to avoid extra deps) ─────────────────────
 
 const StarIcon = ({ filled }: { filled: boolean }) => (
@@ -475,12 +476,7 @@ export default function LawyersPage() {
         <div className="space-y-8 fade-in">
           {/* Back nav */}
           <div>
-            <Link
-              href="/dashboard"
-              className="text-sm text-primary hover:text-primary-hover transition-colors"
-            >
-              ← Back to Dashboard
-            </Link>
+            <BackLink href="/dashboard">Back to Dashboard</BackLink>
           </div>
 
           {/* Page header */}

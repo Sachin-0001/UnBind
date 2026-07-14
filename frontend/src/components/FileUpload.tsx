@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { UploadCloudIcon, FileTextIcon, SparklesIcon } from "./Icons";
+import BackLink from "./BackLink";
 
 interface FileUploadProps {
   onStartAnalysis: (file: File, role: string) => void;
@@ -56,12 +57,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onStartAnalysis, onBack }) => {
   return (
     <div className="flex flex-col items-center justify-center p-4 sm:p-8 text-center fade-in">
       <div className="w-full max-w-3xl mb-4 text-left">
-        <button
-          onClick={onBack}
-          className="text-sm cursor-pointer text-primary hover:text-primary-hover transition-colors"
-        >
-          &larr; Back to Dashboard
-        </button>
+        <BackLink onClick={onBack}>Back to Dashboard</BackLink>
       </div>
       <div className="w-full max-w-3xl">
         <h2 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl md:text-5xl">

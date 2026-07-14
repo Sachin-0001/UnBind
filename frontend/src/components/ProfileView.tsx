@@ -7,6 +7,7 @@ import { updatePassword, getUserPlan, cancelUserPlan } from "@/services/api";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import BackLink from "./BackLink";
 
 interface ProfileViewProps {
   user: User;
@@ -127,12 +128,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ user, analyses }) => {
       {/* Header */}
       <div>
         <div className="w-full max-w-3xl mb-4 text-left">
-         <Link href="/dashboard"><button
-            // onClick={onBack}
-            className="text-sm cursor-pointer text-primary hover:text-primary-hover transition-colors"
-          >
-            &larr; Back to Dashboard
-          </button></Link>
+          <BackLink href="/dashboard">Back to Dashboard</BackLink>
         </div>
         <h2 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl md:text-5xl">
           Your Profile
