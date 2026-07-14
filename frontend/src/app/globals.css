@@ -4,20 +4,153 @@
   --bg-glass: rgba(17, 24, 39, 0.5);
   --border-glass: rgba(99, 102, 241, 0.2);
   --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.15);
+
+  /* ── Linear design system tokens (see DESIGN.md) ── */
+  /* Canvas + four-step surface ladder */
+  --ln-canvas: #010102;
+  --ln-surface-1: #0f1011;
+  --ln-surface-2: #141516;
+  --ln-surface-3: #18191a;
+  --ln-surface-4: #191a1b;
+  /* Hairline borders */
+  --ln-hairline: #23252a;
+  --ln-hairline-strong: #34343a;
+  --ln-hairline-tertiary: #3e3e44;
+  /* Ink (text) ramp */
+  --ln-ink: #f7f8f8;
+  --ln-ink-muted: #d0d6e0;
+  --ln-ink-subtle: #8a8f98;
+  --ln-ink-tertiary: #62666d;
+  /* Lavender-blue accent — the single chromatic accent */
+  --ln-primary: #5e6ad2;
+  --ln-primary-hover: #828fff;
+  --ln-primary-focus: #5e69d1;
+  /* Semantic — used sparingly for risk/status only */
+  --ln-success: #27a644;
+  --ln-danger: #f87171;
+  --ln-warning: #fbbf24;
+}
+
+/* Expose Linear tokens to Tailwind v4 as utility colors:
+   bg-canvas, bg-surface-1..4, text-ink / text-ink-muted / text-ink-subtle /
+   text-ink-tertiary, border-hairline / border-hairline-strong, text-primary /
+   bg-primary, text-success / text-danger / text-warning, etc. */
+@theme inline {
+  --color-canvas: var(--ln-canvas);
+  --color-surface-1: var(--ln-surface-1);
+  --color-surface-2: var(--ln-surface-2);
+  --color-surface-3: var(--ln-surface-3);
+  --color-surface-4: var(--ln-surface-4);
+  --color-hairline: var(--ln-hairline);
+  --color-hairline-strong: var(--ln-hairline-strong);
+  --color-hairline-tertiary: var(--ln-hairline-tertiary);
+  --color-ink: var(--ln-ink);
+  --color-ink-muted: var(--ln-ink-muted);
+  --color-ink-subtle: var(--ln-ink-subtle);
+  --color-ink-tertiary: var(--ln-ink-tertiary);
+  --color-primary: var(--ln-primary);
+  --color-primary-hover: var(--ln-primary-hover);
+  --color-primary-focus: var(--ln-primary-focus);
+  --color-success: var(--ln-success);
+  --color-danger: var(--ln-danger);
+  --color-warning: var(--ln-warning);
 }
 
 body {
   font-family: "Inter", sans-serif;
-  background-color: #030712;
-  background-image:
-    radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.1) 0px, transparent 50%),
-    radial-gradient(at 97% 21%, hsla(125, 98%, 72%, 0.1) 0px, transparent 50%),
-    radial-gradient(at 52% 99%, hsla(355, 98%, 61%, 0.1) 0px, transparent 50%),
-    radial-gradient(at 10% 29%, hsla(256, 96%, 61%, 0.1) 0px, transparent 50%),
-    radial-gradient(at 97% 96%, hsla(38, 60%, 74%, 0.1) 0px, transparent 50%),
-    radial-gradient(at 33% 50%, hsla(222, 67%, 73%, 0.1) 0px, transparent 50%),
-    radial-gradient(at 79% 53%, hsla(343, 68%, 79%, 0.1) 0px, transparent 50%);
-  color: #e5e7eb;
+  background-color: var(--ln-canvas);
+  color: var(--ln-ink);
+}
+
+/* ── Linear component primitives ──
+   Reusable classes so components share one visual vocabulary. */
+
+/* Surface-1 charcoal card with hairline border — the default panel. */
+.ln-card {
+  background: var(--ln-surface-1);
+  border: 1px solid var(--ln-hairline);
+  border-radius: 12px;
+}
+
+/* Slightly lifted card (surface-2) for featured/hovered states. */
+.ln-card-raised {
+  background: var(--ln-surface-2);
+  border: 1px solid var(--ln-hairline-strong);
+  border-radius: 12px;
+}
+
+/* Primary lavender CTA. */
+.ln-btn-primary {
+  background: var(--ln-primary);
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background-color 0.15s ease;
+}
+.ln-btn-primary:hover { background: var(--ln-primary-hover); }
+.ln-btn-primary:active { background: var(--ln-primary-focus); }
+.ln-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Secondary charcoal button. */
+.ln-btn-secondary {
+  background: var(--ln-surface-1);
+  color: var(--ln-ink);
+  border: 1px solid var(--ln-hairline);
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.ln-btn-secondary:hover {
+  background: var(--ln-surface-2);
+  border-color: var(--ln-hairline-strong);
+}
+
+/* Text input / textarea. */
+.ln-input {
+  background: var(--ln-surface-1);
+  color: var(--ln-ink);
+  border: 1px solid var(--ln-hairline);
+  border-radius: 8px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.ln-input::placeholder { color: var(--ln-ink-tertiary); }
+.ln-input:focus {
+  outline: none;
+  border-color: var(--ln-primary-focus);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ln-primary-focus) 50%, transparent);
+}
+
+/* Pill status badge. */
+.ln-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  background: var(--ln-surface-2);
+  color: var(--ln-ink-muted);
+}
+
+/* Site-wide ambient lavender light anchored just below the sticky navbar.
+   Fixed so it stays put on scroll; sits behind all content and ignores
+   pointer events. Present on every page via the root layout. */
+.page-glow {
+  position: fixed;
+  top: 56px; /* just under the sticky header */
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(90vw, 60rem);
+  height: 20rem;
+  border-radius: 9999px;
+  filter: blur(90px);
+  background: radial-gradient(
+    closest-side,
+    rgba(94, 106, 210, 0.22),
+    transparent
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
 .glass-card {
@@ -79,14 +212,198 @@ body {
   animation: floatY 1.6s ease-in-out infinite;
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   Premium micro-animation toolkit (landing page)
+   All entrance motion is scroll-triggered via .reveal (JS adds
+   .is-visible). Ambient loops are opt-in classes. Everything is
+   disabled under prefers-reduced-motion at the bottom of this file.
+   ───────────────────────────────────────────────────────────────── */
+
+/* Scroll-reveal: fade + rise + subtle scale. Cubic-bezier gives the
+   "settle" easing that reads as expensive rather than linear. */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px) scale(0.985);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+/* Stagger children: set --i (index) on each child; delay compounds. */
+.reveal[style*="--i"],
+.reveal-child {
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+
+/* Hero-grade entrance played once on mount (no scroll needed). */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise-in {
+  opacity: 0;
+  animation: riseIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 100ms);
+}
+
+/* Shimmer sweep — a diagonal light pass across a surface. Apply to a
+   positioned element; the ::after runs the sweep. */
+@keyframes shimmerSweep {
+  0% { transform: translateX(-120%) skewX(-18deg); }
+  100% { transform: translateX(220%) skewX(-18deg); }
+}
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.06),
+    transparent
+  );
+  transform: translateX(-120%) skewX(-18deg);
+  animation: shimmerSweep 3.2s ease-in-out infinite;
+  animation-delay: 1s;
+  pointer-events: none;
+}
+
+/* Slow ambient float for the hero product mockup. */
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+/* Soft glow pulse for accent halos. */
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.7; }
+}
+.glow-pulse {
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
+/* Button sheen — a light streak sweeps on hover. */
+.btn-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.btn-sheen::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+  transform: translateX(-180%) skewX(-20deg);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+.btn-sheen:hover::before {
+  transform: translateX(320%) skewX(-20deg);
+}
+
+/* Card hover lift — springy translate + accent border/shadow. */
+.lift {
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
+  will-change: transform;
+}
+.lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.7);
+}
+
+/* Typing caret blink for the terminal/streaming mock. */
+@keyframes caretBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.caret::after {
+  content: "▌";
+  margin-left: 1px;
+  animation: caretBlink 1s step-end infinite;
+}
+
+/* Animated progress bar fill (risk meters, streaming bar). */
+@keyframes fillBar {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.fill-bar {
+  transform-origin: left center;
+}
+.reveal.is-visible .fill-bar {
+  animation: fillBar 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Dashed scan line that travels down (upload / analysing mock). */
+@keyframes scanY {
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(200%); opacity: 0; }
+}
+.scan-line {
+  animation: scanY 2.6s ease-in-out infinite;
+}
+
+/* Marquee for a logos/keywords row. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  animation: marquee 28s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .scroll-reveal {
+  .scroll-reveal,
+  .reveal {
     opacity: 1;
     transform: none;
     transition: none;
   }
-
-  .animate-float-y {
+  .reveal.is-visible {
+    transform: none;
+  }
+  .rise-in {
+    opacity: 1;
     animation: none;
+  }
+  .animate-float-y,
+  .float-slow,
+  .glow-pulse,
+  .shimmer::after,
+  .scan-line,
+  .marquee-track,
+  .caret::after,
+  .animate-tilt {
+    animation: none;
+  }
+  .lift:hover {
+    transform: none;
+  }
+  .btn-sheen::before {
+    display: none;
   }
 }

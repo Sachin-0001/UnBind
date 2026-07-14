@@ -8,28 +8,35 @@ interface LoadingSpinnerProps {
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ message }) => {
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-80 flex flex-col items-center justify-center z-50">
-      <svg
-        className="animate-spin h-12 w-12 text-indigo-400"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
+    <div className="fixed inset-0 bg-canvas/90 flex flex-col items-center justify-center z-50">
+      <div className="relative w-24 h-24 animate-tilt">
+        <svg
+          viewBox="0 0 64 64"
+          fill="none"
           stroke="currentColor"
-          strokeWidth="4"
-        ></circle>
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        ></path>
-      </svg>
-      <p className="mt-4 text-lg text-white">{message || "Processing..."}</p>
+          className="w-full h-full text-primary"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          {/* Stand */}
+          <line x1="32" y1="8" x2="32" y2="48" />
+          <line x1="16" y1="16" x2="48" y2="16" />
+          <line x1="24" y1="48" x2="40" y2="48" />
+          <line x1="20" y1="56" x2="44" y2="56" />
+
+          {/* Left scale */}
+          <line x1="16" y1="16" x2="10" y2="28" />
+          <circle cx="10" cy="32" r="6" />
+
+          {/* Right scale */}
+          <line x1="48" y1="16" x2="54" y2="28" />
+          <circle cx="54" cy="32" r="6" />
+        </svg>
+      </div>
+      <p className="mt-4 text-lg text-ink text-center px-4">
+        {message || "Processing..."}
+      </p>
     </div>
   );
 };

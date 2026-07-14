@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import FileUpload from "@/components/FileUpload";
-import Loading from "../loading";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorMessage from "@/components/ErrorMessage";
 import Toast from "@/components/Toast";
@@ -11,7 +10,7 @@ import Header from "@/components/Header";
 import { LogoIcon } from "@/components/Icons";
 import { useAuth } from "@/context/AuthContext";
 import * as api from "@/services/api";
-import type { StoredAnalysis } from "@/types";
+import type { StoredAnalysis, AnalysisProgressEvent } from "@/types";
 import footer from "@/components/footer";
 export default function UploadPage() {
   const { user, refreshAnalyses } = useAuth();
@@ -37,7 +36,13 @@ export default function UploadPage() {
       setLoadingMessage("Uploading and analyzing document...");
 
       try {
-        const result = await api.uploadAndAnalyze(file, role);
+        const result = await api.uploadAndAnalyzeStream(
+          file,
+          role,
+          (event: AnalysisProgressEvent) => {
+            setLoadingMessage(event.message);
+          },
+        );
         await refreshAnalyses();
         sessionStorage.setItem("currentAnalysis", JSON.stringify(result));
         router.push("/analysis");
@@ -59,7 +64,7 @@ export default function UploadPage() {
 
   if (!user) return null;
 
-  if (isLoading) return <Loading />;
+  if (isLoading) return <LoadingSpinner message={loadingMessage} />;
 
   return (
     <div className="min-h-screen font-sans">
