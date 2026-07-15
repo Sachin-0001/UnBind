@@ -214,10 +214,7 @@ async def upload_and_analyze(
     file_name = file.filename or "document"
 
     # Determine file type and extract text
-    if file.content_type == "application/pdf" or file_name.lower().endswith(".pdf"):
-        text = _extract_pdf_text(content)
-    else:
-        text = content.decode("utf-8", errors="replace")
+    text = _extract_text_from_upload(content, file.content_type, file_name)
 
     if not text or len(text.strip()) < 50:
         raise HTTPException(
@@ -298,10 +295,7 @@ async def upload_and_analyze_stream(
     content = await file.read()
     file_name = file.filename or "document"
 
-    if file.content_type == "application/pdf" or file_name.lower().endswith(".pdf"):
-        text = _extract_pdf_text(content)
-    else:
-        text = content.decode("utf-8", errors="replace")
+    text = _extract_text_from_upload(content, file.content_type, file_name)
 
     if not text or len(text.strip()) < 50:
         raise HTTPException(
@@ -394,7 +388,19 @@ async def simulate(body: SimulateRequest, request: Request):
     return {"result": result}
 
 
-# ──── PDF text extraction helper ────
+# ──── File text extraction helpers ────
+
+
+DOCX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+
+def _extract_text_from_upload(content: bytes, content_type: str | None, file_name: str) -> str:
+    """Dispatch to the right extractor based on content-type/filename, or decode as plain text."""
+    if content_type == "application/pdf" or file_name.lower().endswith(".pdf"):
+        return _extract_pdf_text(content)
+    if content_type == DOCX_CONTENT_TYPE or file_name.lower().endswith(".docx"):
+        return _extract_docx_text(content)
+    return content.decode("utf-8", errors="replace")
 
 
 def _extract_pdf_text(pdf_bytes: bytes) -> str:
@@ -420,3 +426,23 @@ def _extract_pdf_text(pdf_bytes: bytes) -> str:
             return "\n\n".join(pages)
         except Exception as e:
             raise HTTPException(status_code=422, detail=f"Failed to extract PDF text: {e}") from e
+
+
+def _extract_docx_text(docx_bytes: bytes) -> str:
+    try:
+        import docx
+
+        document = docx.Document(io.BytesIO(docx_bytes))
+
+        paragraphs = [p.text for p in document.paragraphs if p.text and p.text.strip()]
+
+        table_text: list[str] = []
+        for table in document.tables:
+            for row in table.rows:
+                cells = [cell.text.strip() for cell in row.cells if cell.text and cell.text.strip()]
+                if cells:
+                    table_text.append("\t".join(cells))
+
+        return "\n".join(paragraphs + table_text)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Failed to extract DOCX text: {e}") from e
