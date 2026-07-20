@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.4",
@@ -30,6 +31,7 @@
     "eslint-config-next": "^15.5.12",
     "postcss": "^8.5.0",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.10"
   }
 }
