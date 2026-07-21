@@ -48,6 +48,7 @@ export default function AnalysisPage() {
           <AnalysisDisplay
             analysisResult={analysis.analysisResult}
             documentText={analysis.documentText}
+            analysisId={analysis.id}
             onError={setError}
             onBackToDashboard={() => router.push("/dashboard")}
           />

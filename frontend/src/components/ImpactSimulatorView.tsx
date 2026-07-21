@@ -2,11 +2,21 @@
 
 import React, { useState, useCallback, useRef } from "react";
 import * as api from "@/services/api";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { Citation, SimulationResult } from "@/types";
 import { SparklesIcon } from "./Icons";
 
+interface SimulationHistoryItem {
+  id: string;
+  scenario: string;
+  result: SimulationResult;
+  ts: number;
+}
+
 interface ImpactSimulatorViewProps {
   documentText: string;
+  /** Stable analysis id — scopes persisted history to this specific analysis. */
+  analysisId: string;
   onError: (message: string) => void;
   /** Ask the parent to highlight + scroll to a cited passage in the document. */
   onCitationJump: (citation: Citation) => void;
@@ -14,15 +24,18 @@ interface ImpactSimulatorViewProps {
 
 const ImpactSimulatorView: React.FC<ImpactSimulatorViewProps> = ({
   documentText,
+  analysisId,
   onError,
   onCitationJump,
 }) => {
   const [scenario, setScenario] = useState<string>("");
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [history, setHistory] = useState<
-    Array<{ id: string; scenario: string; result: SimulationResult; ts: number }>
-  >([]);
+  // Persisted per-analysis so past questions survive refresh and navigation.
+  const [history, setHistory] = useLocalStorage<SimulationHistoryItem[]>(
+    `unbind_impact_sim:${analysisId}`,
+    [],
+  );
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const runSimulation = useCallback(async () => {
@@ -51,7 +64,7 @@ const ImpactSimulatorView: React.FC<ImpactSimulatorViewProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [scenario, isLoading, documentText, onError]);
+  }, [scenario, isLoading, documentText, onError, setHistory]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {

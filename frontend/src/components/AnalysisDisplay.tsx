@@ -16,6 +16,8 @@ import CompareDocumentsModal from "./CompareDocumentsModal";
 interface AnalysisDisplayProps {
   analysisResult: AnalysisResponse;
   documentText: string;
+  /** Stable analysis id, forwarded to the simulator to scope persisted state. */
+  analysisId: string;
   onError: (message: string | null) => void;
   onBackToDashboard: () => void;
 }
@@ -23,6 +25,7 @@ interface AnalysisDisplayProps {
 const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
   analysisResult,
   documentText,
+  analysisId,
   onError,
   onBackToDashboard,
 }) => {
@@ -69,6 +72,7 @@ const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({
         return (
           <ImpactSimulatorView
             documentText={documentText}
+            analysisId={analysisId}
             onError={(msg) => onError(msg)}
             onCitationJump={handleCitationJump}
           />
