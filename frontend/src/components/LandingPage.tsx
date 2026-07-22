@@ -10,6 +10,8 @@ import {
   DownloadIcon,
   CalendarIcon,
   AlertTriangleIcon,
+  CameraIcon,
+  FileSearchIcon,
 } from "./Icons";
 import HeroProductMockup from "./HeroProductMockup";
 import HowItWorksFlow from "./HowItWorksFlow";
@@ -285,9 +287,19 @@ const LandingPage: React.FC = () => {
                 desc: "Clause-by-clause risk scoring with a visual risk meter. See what's dangerous before you sign.",
               },
               {
+                icon: <CameraIcon className="h-6 w-6" />,
+                title: "Snap a Photo",
+                desc: "Only have a paper contract? Photograph or scan it and our vision AI reads the text for you — no typing.",
+              },
+              {
                 icon: <ShieldCheckIcon className="h-6 w-6" />,
                 title: "Negotiation Helper",
-                desc: "AI-generated alternative clauses with keep, AI-suggested, or custom options for every risky term.",
+                desc: "AI-suggested clause rewrites with keep, AI, or custom options for every risky term.",
+              },
+              {
+                icon: <SparklesIcon className="h-6 w-6" />,
+                title: "Negotiation Message",
+                desc: "Turn the changes you want into a polite, ready-to-send message — pick the points, tone, and format, then copy and send.",
               },
               {
                 icon: <BookOpenIcon className="h-6 w-6" />,
@@ -302,7 +314,12 @@ const LandingPage: React.FC = () => {
               {
                 icon: <TargetIcon className="h-6 w-6" />,
                 title: "Impact Simulator",
-                desc: '"What if I…?" scenario testing against your contract. See how changes ripple through terms.',
+                desc: '"What if I…?" scenario testing against your contract. See how changes ripple through your terms.',
+              },
+              {
+                icon: <FileSearchIcon className="h-6 w-6" />,
+                title: "Source Citations",
+                desc: "Every simulator answer links to the exact clause it's based on — one click jumps you straight there in the document.",
               },
               {
                 icon: <FileTextIcon className="h-6 w-6" />,
@@ -418,8 +435,8 @@ const LandingPage: React.FC = () => {
             steps={[
               {
                 step: "01",
-                title: "Upload your contract",
-                desc: "Drag and drop any PDF contract. We support NDAs, employment agreements, SaaS terms, and more.",
+                title: "Upload or photograph your contract",
+                desc: "Drag and drop a PDF or DOCX — or snap a photo of a paper contract and we'll read it. NDAs, leases, employment agreements, SaaS terms, and more.",
                 mockup: <UploadMockup />,
               },
               {
@@ -431,7 +448,7 @@ const LandingPage: React.FC = () => {
               {
                 step: "03",
                 title: "Review and negotiate",
-                desc: "Explore risks, get alternative clauses, simulate scenarios, and export a full report as PDF.",
+                desc: "Explore risks, run cited what-if scenarios, get a ready-to-send negotiation message, and export a full report as PDF.",
                 mockup: <NegotiationMockup />,
               },
             ]}

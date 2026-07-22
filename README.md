@@ -1,6 +1,6 @@
 ## UnbindAI — AI-Powered Legal Contract Analyzer
 
-UnbindAI uses AI to break down legal contracts into plain English. Upload a PDF, get instant clause-by-clause risk analysis, negotiation suggestions, key terms glossary, deadline tracking, and what-if impact simulations.
+UnbindAI uses AI to break down legal contracts into plain English. Upload a PDF — or snap a photo of a paper contract — and get instant clause-by-clause risk analysis, negotiation suggestions (including a ready-to-send negotiation message), a key terms glossary, deadline tracking, and cited what-if impact simulations.
 
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)
@@ -16,12 +16,13 @@ UnbindAI uses AI to break down legal contracts into plain English. Upload a PDF,
 
 | Feature                   | Description                                                 |
 | ------------------------- | ----------------------------------------------------------- |
-| **📄 PDF Upload**         | Drag-and-drop or click to upload any legal contract         |
+| **📄 PDF / DOCX Upload**  | Drag-and-drop or click to upload any legal contract         |
+| **📸 Photo / Scan OCR**   | Photograph or upload an image of a paper contract — a Groq vision model reads the text |
 | **⚠️ Risk Analysis**      | Clause-by-clause risk scoring with a visual risk meter      |
-| **🤝 Negotiation Helper** | AI-generated suggestions with keep/AI/custom clause options |
+| **🤝 Negotiation Helper** | AI-generated clause rewrites (keep/AI/custom) **plus a ready-to-send negotiation message** you can copy and send |
 | **📖 Key Terms Glossary** | Legal jargon explained in plain English                     |
 | **📅 Key Dates**          | Automatic deadline extraction with ICS calendar export      |
-| **🎯 Impact Simulator**   | "What if I…?" scenario testing against your contract        |
+| **🎯 Impact Simulator**   | "What if I…?" scenario testing — answers cite the exact clauses and jump to them in the document |
 | **📄 Document View**      | Side-by-side view with interactive clause highlighting      |
 | **📥 PDF Export**         | Download full analysis reports and modified contracts       |
 | **🔐 Auth**               | Secure JWT-based signup/login                               |
@@ -45,9 +46,11 @@ UnbindAI/
 │   │   │   ├── auth_routes.py
 │   │   │   └── analysis_routes.py
 │   │   └── services/
-│   │       ├── groq_service.py       # Groq LLM API client
+│   │       ├── groq_service.py       # Groq LLM client (chat, HyDE, negotiation, vision OCR)
 │   │       ├── pdf_processing.py     # Text extraction + chunking
-│   │       └── analysis_service.py   # Contract analysis pipeline
+│   │       ├── analysis_service.py   # Contract analysis + HyDE-cited impact simulator
+│   │       ├── negotiation_service.py # Drafts ready-to-send negotiation messages
+│   │       └── ocr_service.py        # Vision OCR for photographed/scanned contracts
 │   ├── requirements.txt
 │   └── .env.example
 │
@@ -78,9 +81,9 @@ UnbindAI/
 ## How It Works
 
 ```
-User uploads PDF
+User uploads a PDF/DOCX — or photographs a paper contract
        ↓
-Backend extracts text (pdfplumber / PyPDF2)
+Text extracted (pdfplumber / PyPDF2) — OR images read by a Groq vision model (OCR)
        ↓
 Text is semantically chunked (heading-aware splitting)
        ↓
@@ -92,6 +95,8 @@ Stored in MongoDB + returned to frontend
        ↓
 Interactive UI with tabs, highlighting, and export
 ```
+
+The **Impact Simulator** adds a retrieval step: it uses HyDE (hypothetical-document embeddings) over a Chroma index of the contract to find the most relevant clauses, then answers with **inline citations** that link back to the exact text. Retrieval, message drafting, and OCR each run on their own optional Groq key so they don't share rate limits (see [API Keys](#api-keys)).
 
 ---
 
@@ -170,7 +175,9 @@ unbind contract.pdf
 | `HUGGINGFACEHUB_API_TOKEN` | [HuggingFace](https://huggingface.co/settings/tokens) → New token (read scope) — used for embeddings | Free |
 | `SMTP_USER` / `SMTP_PASSWORD` | Gmail address + [App Password](https://support.google.com/accounts/answer/185833) — required for lawyer-contact emails | Free |
 
-> **Optional settings** (sane defaults, override only if needed): `PORT`, `FRONTEND_URL`, `LANGSMITH_*` (tracing), `SMTP_HOST` / `SMTP_PORT` / `EMAIL_FROM_NAME`, `JWT_ALGORITHM` / `JWT_EXPIRE_DAYS` / `COOKIE_NAME`, and `VERCEL_PREVIEW_REGEX` (opt-in CORS for Vercel preview URLs). See [`backend/.env.example`](backend/.env.example) for the full list.
+> **Feature-specific Groq keys** (all optional — each falls back to `GROQ_API_KEY`, so a single key still works): `HYDE_KEY` (impact-simulator retrieval), `NEGOTIATION_KEY` (negotiation-message drafting), and `GROQ_VISION` (photo/scan OCR). Giving each feature its own key means they draw on independent per-key rate limits. OCR also needs `OCR_MODEL` set to a **vision-capable** Groq model (default `qwen/qwen3.6-27b` — verify against Groq's current model list, as vision IDs change).
+>
+> **Other optional settings** (sane defaults, override only if needed): `PORT`, `FRONTEND_URL`, `LANGSMITH_*` (tracing), `SMTP_HOST` / `SMTP_PORT` / `EMAIL_FROM_NAME`, `JWT_ALGORITHM` / `JWT_EXPIRE_DAYS` / `COOKIE_NAME`, and `VERCEL_PREVIEW_REGEX` (opt-in CORS for Vercel preview URLs). See [`backend/.env.example`](backend/.env.example) for the full list.
 
 ---
 
@@ -265,13 +272,16 @@ Credentials are stored in `~/.config/unbindai/config.json` (Linux) and reused ac
 
 ### Analysis
 
-| Method | Endpoint                    | Description                |
-| ------ | --------------------------- | -------------------------- |
-| POST   | `/api/analysis/upload`      | Upload PDF → full analysis |
-| POST   | `/api/analysis/analyze`     | Analyze raw text           |
-| GET    | `/api/analysis/history`     | User's past analyses       |
-| GET    | `/api/analysis/history/:id` | Single analysis by ID      |
-| POST   | `/api/analysis/simulate`    | What-if impact simulation  |
+| Method | Endpoint                             | Description                                          |
+| ------ | ------------------------------------ | ---------------------------------------------------- |
+| POST   | `/api/analysis/upload`               | Upload PDF/DOCX/image → full analysis (images OCR'd) |
+| POST   | `/api/analysis/upload/stream`        | Same, streaming progress via SSE (OCR step included) |
+| POST   | `/api/analysis/analyze`              | Analyze raw text                                     |
+| GET    | `/api/analysis/history`              | User's past analyses                                 |
+| GET    | `/api/analysis/history/:id`          | Single analysis by ID                                |
+| DELETE | `/api/analysis/history/:id`          | Delete an analysis                                   |
+| POST   | `/api/analysis/simulate`             | What-if impact simulation (returns cited answer)     |
+| POST   | `/api/analysis/negotiation-message`  | Draft a ready-to-send negotiation message            |
 
 ---
 
@@ -282,9 +292,10 @@ Credentials are stored in `~/.config/unbindai/config.json` (Linux) and reused ac
 | Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS v4               |
 | Backend  | FastAPI, Python 3.12, Pydantic                                  |
 | Database | MongoDB Atlas (Motor async driver)                              |
-| AI       | Groq API — Llama 3.3 70B Versatile                              |
+| AI       | Groq API — Llama 3.3 70B (analysis/HyDE/negotiation) · Qwen3 vision (OCR) |
+| Retrieval| Chroma vector store · HuggingFace embeddings · HyDE query expansion |
 | Auth     | JWT (python-jose), bcrypt (passlib)                             |
-| PDF      | pdfplumber, PyPDF2 (backend) · jsPDF, pdf-lib (frontend export) |
+| PDF/Image| pdfplumber, PyPDF2, Pillow (backend) · jsPDF, pdf-lib (frontend export) |
 | CLI      | Node.js 18+, inquirer, chalk, ora, boxen, conf                  |
 
 ---
