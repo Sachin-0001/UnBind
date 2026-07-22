@@ -16,6 +16,9 @@ import {
   ShieldCheckIcon,
 } from "./Icons";
 import OverlayRephrasedPdf from "./OverlayRephrasedPdf";
+import NegotiationMessageComposer, {
+  type NegotiationCandidate,
+} from "./NegotiationMessageComposer";
 
 interface NegotiationHelperViewProps {
   analysisResult: AnalysisResponse;
@@ -303,6 +306,26 @@ const NegotiationHelperView: React.FC<NegotiationHelperViewProps> = ({
     (clause) => clause.riskLevel !== "No Risk",
   );
 
+  // Candidates for the negotiation message. Prefer the wording the user chose
+  // per clause (AI rewrite or their custom text); otherwise fall back to the
+  // AI's suggested rewrite so the composer works even before any choice.
+  const negotiationCandidates: NegotiationCandidate[] = riskClauses.map(
+    (clause, index) => {
+      const modified = modifiedClauses.get(index);
+      const desiredRewrite = modified?.isModified
+        ? modified.finalText
+        : (clause.suggestedRewrite ?? null);
+      return {
+        index,
+        clauseText: clause.clauseText,
+        concern: clause.riskReason,
+        request: clause.negotiationSuggestion,
+        desiredRewrite,
+        riskLevel: clause.riskLevel,
+      };
+    },
+  );
+
   const handleCardClick = (index: number) => {
     const docClause = document.getElementById(`doc-clause-${index}`);
     docClause?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -509,6 +532,8 @@ const NegotiationHelperView: React.FC<NegotiationHelperViewProps> = ({
           </button>
         </div>
       </div>
+
+      <NegotiationMessageComposer candidates={negotiationCandidates} />
 
       {showPreview && (
         <div className="ln-card p-4">

@@ -10,8 +10,9 @@ from langsmith.run_helpers import tracing_context
 
 from app.auth import get_current_user_id
 from app.database import get_db
-from app.schemas import AnalyzeRequest, SimulateRequest
+from app.schemas import AnalyzeRequest, NegotiationDraftRequest, SimulateRequest
 from app.services.analysis_service import analyze_contract, simulate_impact
+from app.services.negotiation_service import draft_negotiation_message
 from app.services.plan_service import effective_plan
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
@@ -390,6 +391,23 @@ async def simulate(body: SimulateRequest, request: Request):
     # ``result`` (the answer string) is kept for backward compatibility; the UI
     # additionally uses ``citations`` to link answer markers to the document.
     return {"result": result["answer"], "citations": result["citations"]}
+
+
+@router.post("/negotiation-message")
+async def negotiation_message(body: NegotiationDraftRequest, request: Request):
+    """Draft a ready-to-send negotiation message from selected clause changes."""
+    user_id = await get_current_user_id(request)
+    with tracing_context(
+        metadata={
+            "endpoint": "analysis.negotiation_message",
+            "user_id": user_id,
+            "point_count": len(body.points),
+            "tone": body.tone,
+            "format": body.format,
+        },
+        tags=["analysis", "api", "negotiation"],
+    ):
+        return await draft_negotiation_message(body)
 
 
 # ──── File text extraction helpers ────

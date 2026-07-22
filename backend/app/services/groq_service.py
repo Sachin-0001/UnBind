@@ -26,6 +26,11 @@ _CHAT_SEMAPHORE = asyncio.Semaphore(2)
 # have independent per-key rate limits and shouldn't throttle each other.
 _HYDE_SEMAPHORE = asyncio.Semaphore(2)
 
+# The negotiation copilot runs on its own Groq key (NEGOTIATION_API_KEY) with a
+# dedicated concurrency gate, for the same reason as HyDE — independent per-key
+# rate limits so drafting never throttles (or is throttled by) analysis calls.
+_NEGOTIATION_SEMAPHORE = asyncio.Semaphore(2)
+
 _MAX_RETRIES = 5
 
 # HyDE (Hypothetical Document Embeddings): rather than embed the user's short,
@@ -76,6 +81,19 @@ def _get_hyde_api_key() -> str:
     key = settings.HYDE_API_KEY or settings.GROQ_API_KEY
     if not key:
         raise RuntimeError("Neither HYDE_API_KEY nor GROQ_API_KEY is set")
+    return key
+
+
+def _get_negotiation_api_key() -> str:
+    """API key for the negotiation copilot.
+
+    Prefers the dedicated NEGOTIATION_API_KEY so drafting draws on its own
+    per-key rate limit; falls back to GROQ_API_KEY when no separate key is set.
+    """
+    settings = get_settings()
+    key = settings.NEGOTIATION_API_KEY or settings.GROQ_API_KEY
+    if not key:
+        raise RuntimeError("Neither NEGOTIATION_API_KEY nor GROQ_API_KEY is set")
     return key
 
 
@@ -187,3 +205,25 @@ async def generate_hypothetical_document(
         ]
     )
     return await _invoke_with_retry(llm, lc_messages, _HYDE_SEMAPHORE)
+
+
+@traceable(name="negotiation_complete")
+async def negotiation_complete(
+    messages: list[dict],
+    temperature: float = 0.4,
+) -> str:
+    """Chat completion for the negotiation copilot.
+
+    Uses a ChatGroq instance built with the dedicated negotiation key
+    (NEGOTIATION_API_KEY) and its own concurrency gate, so drafting messages
+    uses a separate per-key rate limit from the main analysis calls. A slightly
+    higher default temperature suits natural-sounding prose.
+    """
+    api_key = _get_negotiation_api_key()
+    llm = ChatGroq(
+        model=FREE_MODEL,
+        temperature=temperature,
+        api_key=api_key,
+    )
+    lc_messages = _to_lc_messages(messages)
+    return await _invoke_with_retry(llm, lc_messages, _NEGOTIATION_SEMAPHORE)

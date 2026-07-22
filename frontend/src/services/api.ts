@@ -6,6 +6,8 @@ import type {
   AnalysisProgressEvent,
   Citation,
   SimulationResult,
+  NegotiationDraftRequest,
+  NegotiationDraft,
 } from "@/types";
 
 const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_URL ?? ""}/api`;
@@ -292,6 +294,15 @@ export const simulateImpact = async (
     },
   );
   return { answer: data.result, citations: data.citations ?? [] };
+};
+
+export const draftNegotiationMessage = async (
+  payload: NegotiationDraftRequest,
+): Promise<NegotiationDraft> => {
+  return apiFetch<NegotiationDraft>("/analysis/negotiation-message", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 };
 
 export const deleteAnalysis = async (id: string): Promise<void> => {

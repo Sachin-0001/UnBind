@@ -91,6 +91,27 @@ class SimulateRequest(BaseModel):
     scenario: str
 
 
+# ---------- Negotiation copilot ----------
+class NegotiationPoint(BaseModel):
+    clauseText: str
+    concern: str = ""  # why the clause is a problem (e.g. the risk reason)
+    request: str = ""  # the change to ask for (e.g. the negotiation suggestion)
+    desiredRewrite: str | None = None  # preferred wording, if the user picked one
+
+
+class NegotiationDraftRequest(BaseModel):
+    points: list[NegotiationPoint]
+    tone: str = "polite"  # polite | neutral | firm
+    format: str = "email"  # email | message | letter
+    counterparty: str = ""  # who the message is addressed to (e.g. "Landlord")
+    senderName: str = ""  # optional name to sign off with
+
+
+class NegotiationDraftResponse(BaseModel):
+    subject: str = ""  # empty for non-email formats
+    body: str
+
+
 # ---------- Lawyer Referral ----------
 class LawyerProfile(BaseModel):
     id: str

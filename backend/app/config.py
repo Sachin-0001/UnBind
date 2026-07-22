@@ -19,6 +19,15 @@ class Settings(BaseSettings):
         default="",
         validation_alias=AliasChoices("HYDE_API_KEY", "HYDE_KEY"),
     )
+    # Separate Groq API key used only for the negotiation copilot (drafting
+    # ready-to-send negotiation messages). Kept distinct from GROQ_API_KEY so
+    # these on-demand drafts draw on their own per-key rate limit instead of
+    # competing with the main analysis quota. Accepts either NEGOTIATION_API_KEY
+    # or NEGOTIATION_KEY in the env; falls back to GROQ_API_KEY when empty.
+    NEGOTIATION_API_KEY: str = Field(
+        default="",
+        validation_alias=AliasChoices("NEGOTIATION_API_KEY", "NEGOTIATION_KEY"),
+    )
     HUGGINGFACEHUB_API_TOKEN: str = ""  # Free token from huggingface.co/settings/tokens
     LANGCHAIN_TRACING_V2: bool = Field(
         default=False,

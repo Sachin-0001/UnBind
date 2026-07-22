@@ -67,6 +67,30 @@ export interface SimulationResult {
   citations: Citation[];
 }
 
+export type NegotiationTone = "polite" | "neutral" | "firm";
+export type NegotiationFormat = "email" | "message" | "letter";
+
+export interface NegotiationPoint {
+  clauseText: string;
+  concern: string;
+  request: string;
+  desiredRewrite?: string | null;
+}
+
+export interface NegotiationDraftRequest {
+  points: NegotiationPoint[];
+  tone: NegotiationTone;
+  format: NegotiationFormat;
+  counterparty: string;
+  senderName: string;
+}
+
+export interface NegotiationDraft {
+  /** Empty for non-email formats. */
+  subject: string;
+  body: string;
+}
+
 export interface User {
   id: string;
   username: string;
